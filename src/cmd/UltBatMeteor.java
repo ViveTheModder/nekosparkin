@@ -12,12 +12,12 @@ public class UltBatMeteor {
 	public static final int RANKING = 3;
 	public static final int CHALLENGE = 4;
 	public static final int CIRCUIT = 5;
+	public static final int[] NUM_MISSIONS = { 7, 100, 3, 100, 37, 5 };
 	public static final String[] MODE_NAMES = {
 		"Sim Dragon", "Mission 100", "Survival", "Ranking Battle", "Ranking Battle (Challengers)", "Circuit Battle"	
 	};
 	private static String[][] paramNames;
 	private static final int[] DAT_SIZES = { 256, 320, 5248, 22016, 704, 6656, 2816, 4416, 1088, 1664, 320, 1792 };
-	private static final int[] NUM_MISSIONS = { 7, 100, 3, 100, 37, 5 };
 	private static final int[] BATTLE_PARAMS_SIZE = { 28, 52, 448, 28, 28, 56 };
 	private static final int[] NUM_ENEMIES = { 1, 5, 50, 99, 1, 8 };
 	//The rest of the parameters are assumed to be opponent IDs (integers), so no need to specify

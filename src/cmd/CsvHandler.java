@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Scanner;
 
 public class CsvHandler {
+	//Hilarious flaw for this method: if the last line is empty, BAM! Exception.
 	private static int getNumRows(File csv) throws IOException {
 		byte[] charBytes = new byte[2];
 		int fileSize = (int) csv.length();
