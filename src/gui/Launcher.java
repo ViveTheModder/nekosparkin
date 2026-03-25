@@ -8,6 +8,8 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -24,6 +26,7 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.UIManager;
 import cmd.UltBatMeteor;
@@ -39,12 +42,16 @@ public class Launcher {
 	static final Color TX_COLOR = new Color(193, 34, 100);
 	static final Font HEADING = new Font("Tahoma", Font.BOLD, 16);
 	static final Font SUBHEADING = new Font("Tahoma", Font.PLAIN, 13);
+	private static final Image BT2_LOGO = DEF_TK.getImage(ClassLoader.getSystemResource("img/bt2.png"));
+	private static final Image BT3_LOGO = DEF_TK.getImage(ClassLoader.getSystemResource("img/bt3.png"));
 	private static final Image OPEN = DEF_TK.getImage(ClassLoader.getSystemResource("img/open.png"));
 	private static final Image SAVE = DEF_TK.getImage(ClassLoader.getSystemResource("img/save.png"));
 	private static final Image SAVE_AS = DEF_TK.getImage(ClassLoader.getSystemResource("img/save-as.png"));
 	static RandomAccessFile[] containers = null;
-
+	private static final ImageIcon BT2_ICO = new ImageIcon(BT2_LOGO.getScaledInstance(48, 48, Image.SCALE_SMOOTH));
+	private static final ImageIcon BT3_ICO = new ImageIcon(BT3_LOGO.getScaledInstance(48, 48, Image.SCALE_SMOOTH));
 	private static final ImageIcon LOGO_ICO = new ImageIcon(LOGO.getScaledInstance(64, 64, Image.SCALE_SMOOTH));
+	
 	private static RandomAccessFile[] getContainersFromChooser(int gameModeIdx) throws IOException {
 		RandomAccessFile[] containers = null;
 		JFileChooser chooser = new JFileChooser();
@@ -75,6 +82,8 @@ public class Launcher {
 		}
 	}
 	private static void start() {
+		//Tired of using static variables, sorry...
+		final boolean[] gameSel = new boolean[1];
 		Box modeBox = Box.createHorizontalBox();
 		Dimension minFrameSize = new Dimension(700, 400);
 		ImageIcon openIco = new ImageIcon(OPEN.getScaledInstance(32, 32, Image.SCALE_SMOOTH));
@@ -95,6 +104,7 @@ public class Launcher {
 		JMenuItem saveAsItem = new JMenuItem("Save As...");
 		JPanel mainPanel = new JPanel(new BorderLayout());
 		JPanel modePanel = new JPanel();
+		JToggleButton gameBtn = new JToggleButton(BT3_ICO);
 		JToolBar toolBar = new JToolBar();
 		//Set components
 		editBtn.setAlignmentX(JButton.CENTER_ALIGNMENT);
@@ -136,6 +146,8 @@ public class Launcher {
 		modePanel.add(Box.createVerticalGlue());
 		toolBar.add(openBtn);
 		toolBar.add(saveBtn);
+		toolBar.add(Box.createHorizontalGlue());
+		toolBar.add(gameBtn);
 		frame.add(mainPanel);
 		fileMenu.add(openItem);
 		fileMenu.add(saveItem);
@@ -143,7 +155,7 @@ public class Launcher {
 		helpMenu.add(aboutItem);
 		menuBar.add(fileMenu);
 		menuBar.add(helpMenu);
-		//Add action listeners
+		//Add listeners
 		aboutItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
@@ -155,12 +167,25 @@ public class Launcher {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
 				try {
-					if (containers[0] != null)
-						Selector.start(frame, minFrameSize, modeDropDown.getSelectedIndex());
+					if (containers != null) {
+						if (containers[0] != null) Selector.start(frame, minFrameSize, modeDropDown.getSelectedIndex());
+					}
 				}
 				catch (IOException e) {
 					errorBeep();
 					JOptionPane.showMessageDialog(null, e.getClass().getSimpleName() + ": " + e.getMessage(), TITLE, 0);
+				}
+			}
+		});
+		gameBtn.addItemListener(new ItemListener() {
+			@Override
+			public void itemStateChanged(ItemEvent ie) {
+				int state = ie.getStateChange();
+				if (state == ItemEvent.SELECTED) {
+					gameSel[0] = !gameSel[0]; //What actually causes the toggle to work properly
+					modeDropDown.setEnabled(!gameSel[0]);
+					if (gameSel[0]) gameBtn.setIcon(BT2_ICO);
+					else gameBtn.setIcon(BT3_ICO);
 				}
 			}
 		});
