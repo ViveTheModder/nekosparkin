@@ -12,13 +12,13 @@ public class UltBatMeteor {
 	public static final int RANKING = 3;
 	public static final int CHALLENGE = 4;
 	public static final int CIRCUIT = 5;
-	public static final int[] NUM_ENEMIES = { 1, 5, 50, 99, 1, 8 };
-	public static final int[] NUM_MISSIONS = { 7, 100, 3, 100, 37, 5 };
+	public static final int[] NUM_ENEMIES = { 1, 5, 50, 1, 1, 8 };
+	public static final int[] NUM_MISSIONS = { 7, 100, 3, 99, 37, 5 };
 	public static final String[] MODE_NAMES = {
 		"Sim Dragon", "Mission 100", "Survival", "Ranking Battle", "Ranking Battle (Challengers)", "Circuit Battle"	
 	};
 	public static final String[] MODE_TYPES = {
-		"", "m100", "srv", "rnk", "chl", "crc"
+		"", "m100", "srv", "", "", "crs"
 	};
 	private static String[][] paramNames;
 	private static final int[] DAT_SIZES = { 256, 320, 5248, 22016, 704, 6656, 2816, 4416, 1088, 1664, 320, 1792 };
