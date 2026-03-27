@@ -32,9 +32,12 @@ import javax.swing.UIManager;
 import cmd.UltBatMeteor;
 /* TODO:
  * 1. Find images to replace the text in the toolbar buttons with. - DONE
- * 2. Add action listeners for remaining buttons (Open, Edit) - DONE. */
+ * 2. Add action listeners for remaining buttons (Open, Edit) - DONE.
+ * 3. Store the last directory loaded via the file chooser in memory.
+ * 4. Only affects combo boxes, but please reset their horizontal alignment after the file chooser is closed.
+ * 5. Add Wii support (toggle button in toolbar). */
 public class Launcher { 
-	private static final Toolkit DEF_TK = Toolkit.getDefaultToolkit();
+	static final Toolkit DEF_TK = Toolkit.getDefaultToolkit();
 	static final Image LOGO = DEF_TK.getImage(ClassLoader.getSystemResource("img/logo.png"));
 	static final String TITLE = "Nekosparkin";
 	static final Color BG_COLOR = new Color(138, 208, 242);
@@ -45,8 +48,6 @@ public class Launcher {
 	private static final Image BT2_LOGO = DEF_TK.getImage(ClassLoader.getSystemResource("img/bt2.png"));
 	private static final Image BT3_LOGO = DEF_TK.getImage(ClassLoader.getSystemResource("img/bt3.png"));
 	private static final Image OPEN = DEF_TK.getImage(ClassLoader.getSystemResource("img/open.png"));
-	private static final Image SAVE = DEF_TK.getImage(ClassLoader.getSystemResource("img/save.png"));
-	private static final Image SAVE_AS = DEF_TK.getImage(ClassLoader.getSystemResource("img/save-as.png"));
 	static RandomAccessFile[] containers = null;
 	private static final ImageIcon BT2_ICO = new ImageIcon(BT2_LOGO.getScaledInstance(48, 48, Image.SCALE_SMOOTH));
 	private static final ImageIcon BT3_ICO = new ImageIcon(BT3_LOGO.getScaledInstance(48, 48, Image.SCALE_SMOOTH));
@@ -87,11 +88,8 @@ public class Launcher {
 		Box modeBox = Box.createHorizontalBox();
 		Dimension minFrameSize = new Dimension(700, 400);
 		ImageIcon openIco = new ImageIcon(OPEN.getScaledInstance(32, 32, Image.SCALE_SMOOTH));
-		ImageIcon saveAsIco = new ImageIcon(SAVE_AS.getScaledInstance(32, 32, Image.SCALE_SMOOTH));
-		ImageIcon saveIco = new ImageIcon(SAVE.getScaledInstance(32, 32, Image.SCALE_SMOOTH));
 		JButton editBtn = new JButton("Edit");
 		JButton openBtn = new JButton("Open Folder...");
-		JButton saveBtn = new JButton("Save");
 		JComboBox<String> modeDropDown = new JComboBox<String>(UltBatMeteor.MODE_NAMES);
 		JFrame frame = new JFrame(TITLE);
 		JLabel label = new JLabel("Select Mode from Ultimate Battle:");
@@ -100,8 +98,6 @@ public class Launcher {
 		JMenu helpMenu = new JMenu("Help");
 		JMenuItem aboutItem = new JMenuItem("About");
 		JMenuItem openItem = new JMenuItem("Open Folder...");
-		JMenuItem saveItem = new JMenuItem("Save");
-		JMenuItem saveAsItem = new JMenuItem("Save As...");
 		JPanel mainPanel = new JPanel(new BorderLayout());
 		JPanel modePanel = new JPanel();
 		JToggleButton gameBtn = new JToggleButton(BT3_ICO);
@@ -121,14 +117,8 @@ public class Launcher {
 		((JLabel) modeDropDown.getRenderer()).setHorizontalAlignment(JLabel.CENTER);
 		modePanel.setBackground(BG_COLOR);
 		modePanel.setLayout(new BoxLayout(modePanel, BoxLayout.Y_AXIS));
-		saveAsItem.setEnabled(false);
-		saveAsItem.setIcon(saveAsIco);
-		saveBtn.setEnabled(false);
-		saveItem.setEnabled(false);
-		saveItem.setIcon(saveIco);
 		openBtn.setIcon(openIco);
 		openItem.setIcon(openIco);
-		saveBtn.setIcon(saveIco);
 		toolBar.addSeparator();
 		toolBar.setFloatable(false);
 		//Add components
@@ -145,13 +135,10 @@ public class Launcher {
 		modePanel.add(editBtn);
 		modePanel.add(Box.createVerticalGlue());
 		toolBar.add(openBtn);
-		toolBar.add(saveBtn);
 		toolBar.add(Box.createHorizontalGlue());
 		toolBar.add(gameBtn);
 		frame.add(mainPanel);
 		fileMenu.add(openItem);
-		fileMenu.add(saveItem);
-		fileMenu.add(saveAsItem);
 		helpMenu.add(aboutItem);
 		menuBar.add(fileMenu);
 		menuBar.add(helpMenu);
