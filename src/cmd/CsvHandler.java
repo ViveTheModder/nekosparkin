@@ -7,7 +7,7 @@ import java.util.Arrays;
 import java.util.Scanner;
 
 public class CsvHandler {
-	//Hilarious flaw for this method: if the last line is empty, BAM! Exception.
+	/* Hilarious flaw for this method: if the last line is empty, BAM! Exception.
 	private static int getNumRows(File csv) throws IOException {
 		byte[] charBytes = new byte[2];
 		int fileSize = (int) csv.length();
@@ -29,6 +29,19 @@ public class CsvHandler {
 		}
 		raf.close();
 		return 0;
+	} */
+	private static int getNumRows(File csv) throws IOException {
+		byte[] charBytes = new byte[2];
+		int rowCnt = 0, fileSize = (int) csv.length();
+		RandomAccessFile raf = new RandomAccessFile(csv, "r");
+		raf.seek(0);
+		for (int pos = 0; pos < fileSize; pos++) {
+			raf.seek(pos);
+			raf.read(charBytes);
+			if (charBytes[0] == 0x0D && charBytes[1] == 0x0A) rowCnt++;
+		}
+		raf.close();
+		return rowCnt + 1;
 	}
 	public static File[] getAvailableCsvFiles() {
 		File csvFolder = new File("./csv/");

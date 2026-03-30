@@ -33,10 +33,12 @@ import cmd.UltBatMeteor;
 /* TODO:
  * 1. Find images to replace the text in the toolbar buttons with. - DONE
  * 2. Add action listeners for remaining buttons (Open, Edit) - DONE.
- * 3. Store the last directory loaded via the file chooser in memory.
- * 4. Only affects combo boxes, but please reset their horizontal alignment after the file chooser is closed.
- * 5. Add Wii support (toggle button in toolbar). */
+ * 3. Store the last directory loaded via the file chooser in memory - DONE.
+ * 4. Only affects combo boxes, but please reset their horizontal alignment after the file chooser is closed - DONE.
+ * 5. Add Wii support (toggle button in toolbar) - DONE. */
 public class Launcher { 
+	static File currDir = null;
+	static RandomAccessFile[] containers = null;
 	static final Toolkit DEF_TK = Toolkit.getDefaultToolkit();
 	static final Image LOGO = DEF_TK.getImage(ClassLoader.getSystemResource("img/logo.png"));
 	static final String TITLE = "Nekosparkin";
@@ -45,12 +47,7 @@ public class Launcher {
 	static final Color TX_COLOR = new Color(193, 34, 100);
 	static final Font HEADING = new Font("Tahoma", Font.BOLD, 16);
 	static final Font SUBHEADING = new Font("Tahoma", Font.PLAIN, 13);
-	private static final Image BT2_LOGO = DEF_TK.getImage(ClassLoader.getSystemResource("img/bt2.png"));
-	private static final Image BT3_LOGO = DEF_TK.getImage(ClassLoader.getSystemResource("img/bt3.png"));
 	private static final Image OPEN = DEF_TK.getImage(ClassLoader.getSystemResource("img/open.png"));
-	static RandomAccessFile[] containers = null;
-	private static final ImageIcon BT2_ICO = new ImageIcon(BT2_LOGO.getScaledInstance(48, 48, Image.SCALE_SMOOTH));
-	private static final ImageIcon BT3_ICO = new ImageIcon(BT3_LOGO.getScaledInstance(48, 48, Image.SCALE_SMOOTH));
 	private static final ImageIcon LOGO_ICO = new ImageIcon(LOGO.getScaledInstance(64, 64, Image.SCALE_SMOOTH));
 	
 	private static RandomAccessFile[] getContainersFromChooser(int gameModeIdx) throws IOException {
@@ -58,10 +55,11 @@ public class Launcher {
 		JFileChooser chooser = new JFileChooser();
 		chooser.setDialogTitle("Open Folder with " + UltBatMeteor.MODE_NAMES[gameModeIdx] + " parameters...");
 		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+		if (currDir != null) chooser.setCurrentDirectory(currDir);
 		int result = chooser.showOpenDialog(null);
 		if (result == JFileChooser.APPROVE_OPTION) {
-			File ultBatDir = chooser.getSelectedFile();
-			containers = UltBatMeteor.getMissionParamContainers(ultBatDir, gameModeIdx);
+			currDir = chooser.getSelectedFile();
+			containers = UltBatMeteor.getMissionParamContainers(currDir, gameModeIdx);
 			if (containers[0] == null) {
 				errorBeep();
 				String err = "Chosen folder contains no valid " + UltBatMeteor.MODE_NAMES[gameModeIdx] + " parameters!";
@@ -74,20 +72,33 @@ public class Launcher {
 		Runnable runWinErrorSnd = (Runnable) DEF_TK.getDesktopProperty("win.sound.exclamation");
 		if (runWinErrorSnd!=null) runWinErrorSnd.run();
 	}
-	private static void open(JComboBox<String> modeDropDown) {
+	private static void open(JComboBox<String> modeDropDown, JPanel panel) {
 		try {
+			((JLabel) modeDropDown.getRenderer()).setHorizontalAlignment(JLabel.CENTER);
+			panel.repaint();
 			containers = getContainersFromChooser(modeDropDown.getSelectedIndex());
+			((JLabel) modeDropDown.getRenderer()).setHorizontalAlignment(JLabel.CENTER);
+			panel.repaint();
 		} catch (IOException e) {
-			errorBeep();
-			JOptionPane.showMessageDialog(null, e.getClass().getSimpleName() + ": " + e.getMessage(), TITLE, 0);
+			error(e);
 		}
 	}
 	private static void start() {
 		//Tired of using static variables, sorry...
-		final boolean[] gameSel = new boolean[1];
+		final boolean[] toggles = new boolean[2];
+		String[] imgNames = {"bt3.png", "bt2.png", "ps2.png", "wii.png"};
+		//Set components
 		Box modeBox = Box.createHorizontalBox();
 		Dimension minFrameSize = new Dimension(700, 400);
 		ImageIcon openIco = new ImageIcon(OPEN.getScaledInstance(32, 32, Image.SCALE_SMOOTH));
+		JToggleButton[] toggleBtns = new JToggleButton[2];
+		Image[] toggleImgs = new Image[toggleBtns.length * 2];
+		ImageIcon[] toggleIcos = new ImageIcon[toggleBtns.length * 2];
+		for (int icoCnt = 0; icoCnt < toggleIcos.length; icoCnt++) {
+			toggleImgs[icoCnt] = DEF_TK.getImage(ClassLoader.getSystemResource("img/" + imgNames[icoCnt]));
+			toggleIcos[icoCnt] = new ImageIcon(toggleImgs[icoCnt].getScaledInstance(48, 48, Image.SCALE_SMOOTH));
+			if (icoCnt % 2 == 0) toggleBtns[icoCnt / 2] = new JToggleButton(toggleIcos[icoCnt]);
+		}
 		JButton editBtn = new JButton("Edit");
 		JButton openBtn = new JButton("Open Folder...");
 		JComboBox<String> modeDropDown = new JComboBox<String>(UltBatMeteor.MODE_NAMES);
@@ -100,7 +111,6 @@ public class Launcher {
 		JMenuItem openItem = new JMenuItem("Open Folder...");
 		JPanel mainPanel = new JPanel(new BorderLayout());
 		JPanel modePanel = new JPanel();
-		JToggleButton gameBtn = new JToggleButton(BT3_ICO);
 		JToolBar toolBar = new JToolBar();
 		//Set components
 		editBtn.setAlignmentX(JButton.CENTER_ALIGNMENT);
@@ -136,7 +146,8 @@ public class Launcher {
 		modePanel.add(Box.createVerticalGlue());
 		toolBar.add(openBtn);
 		toolBar.add(Box.createHorizontalGlue());
-		toolBar.add(gameBtn);
+		toolBar.add(toggleBtns[0]);
+		toolBar.add(toggleBtns[1]);
 		frame.add(mainPanel);
 		fileMenu.add(openItem);
 		helpMenu.add(aboutItem);
@@ -155,7 +166,7 @@ public class Launcher {
 			public void actionPerformed(ActionEvent ae) {
 				try {
 					if (containers != null) {
-						if (containers[0] != null) Selector.start(frame, minFrameSize, modeDropDown.getSelectedIndex());
+						if (containers[0] != null) Selector.start(frame, minFrameSize, modeDropDown.getSelectedIndex(), toggles[1]);
 					}
 				}
 				catch (IOException e) {
@@ -164,28 +175,31 @@ public class Launcher {
 				}
 			}
 		});
-		gameBtn.addItemListener(new ItemListener() {
-			@Override
-			public void itemStateChanged(ItemEvent ie) {
-				int state = ie.getStateChange();
-				if (state == ItemEvent.SELECTED) {
-					gameSel[0] = !gameSel[0]; //What actually causes the toggle to work properly
-					modeDropDown.setEnabled(!gameSel[0]);
-					if (gameSel[0]) gameBtn.setIcon(BT2_ICO);
-					else gameBtn.setIcon(BT3_ICO);
+		for (int toggleCnt = 0; toggleCnt < toggles.length; toggleCnt++) {
+			final int index = toggleCnt;
+			toggleBtns[toggleCnt].addItemListener(new ItemListener() {
+				@Override
+				public void itemStateChanged(ItemEvent ie) {
+					int state = ie.getStateChange();
+					if (state == ItemEvent.SELECTED) {
+						toggles[index] = !toggles[index]; //What actually causes the toggle to work properly
+						if (index == 0) modeDropDown.setEnabled(!toggles[index]);
+						if (toggles[index]) toggleBtns[index].setIcon(toggleIcos[toggles.length * index + 1]);
+						else toggleBtns[index].setIcon(toggleIcos[toggles.length * index]);
+					}
 				}
-			}
-		});
+			});
+		}
 		openBtn.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
-				open(modeDropDown);
+				open(modeDropDown, modePanel);
 			}
 		});
 		openItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
-				open(modeDropDown);
+				open(modeDropDown, modePanel);
 			}
 		});
 		//Set frame properties
@@ -196,14 +210,19 @@ public class Launcher {
 		frame.setLocationRelativeTo(null);
 		frame.setVisible(true);
 	}
+	
+	public static void error(Exception e) {
+		errorBeep();
+		String err = e.getClass().getSimpleName() + ": " + e.getMessage();
+		JOptionPane.showMessageDialog(null, err, TITLE + " - Exception", JOptionPane.ERROR_MESSAGE);
+	}
 	public static void main(String[] args) {
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 			start();
 		}
 		catch (Exception e) {
-			errorBeep();
-			JOptionPane.showMessageDialog(null, e.getClass().getSimpleName() + ": " + e.getMessage(), TITLE, 0);
+			error(e);
 		}
 	}
 }

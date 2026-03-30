@@ -46,7 +46,7 @@ public class UltBatMeteor {
 		}
 		return containers;
 	}
-	public static String[] getMissionInfo(byte[] params, boolean enemy) throws IOException {
+	public static String[] getMissionInfo(byte[] params, boolean enemy, boolean bigEndian) throws IOException {
 		byte[] paramBytes = new byte[4];
 		int size = params.length / 4;
 		File[] csvFiles = CsvHandler.getAvailableCsvFiles();
@@ -55,7 +55,7 @@ public class UltBatMeteor {
 		paramNames = new String[csvFiles.length][]; //If this function is called several times, move this line elsewhere
 		for (int typeCnt = 0; typeCnt < size; typeCnt++) {
 			System.arraycopy(params, typeCnt * 4, paramBytes, 0, 4);
-			int paramVal = ParamHandler.getVal(paramBytes);
+			int paramVal = ParamHandler.getVal(paramBytes, bigEndian);
 			int csvKey = -1;
 			int cappedTypeCnt = typeCnt % paramTypes.length;
 			if (cappedTypeCnt < paramTypes.length) {
