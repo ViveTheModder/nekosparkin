@@ -1,6 +1,6 @@
 package gui;
-import java.awt.Color;
 //Nekosparkin: Character Editor class by ViveTheJoestar
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
@@ -9,7 +9,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
-
 import javax.imageio.ImageIO;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -90,11 +89,11 @@ public class CharaEditor {
 		JLabel[] generalLbls = new JLabel[2], headingLbls = new JLabel[2];
 		JPanel panel = new JPanel();
 		//The actual maximum is unknown (whether it's 255 or 32767)
-		SpinnerNumberModel comLvlMdl = new SpinnerNumberModel(1, 1, 255, 1);
+		SpinnerNumberModel comLvlMdl = new SpinnerNumberModel(0, 0, 255, 1);
 		SpinnerNumberModel costumeMdl = new SpinnerNumberModel(1, 1, 4, 1);
 		JSpinner[] spinners = new JSpinner[2];
-		spinners[0] = new JSpinner(comLvlMdl);
-		spinners[1] = new JSpinner(costumeMdl);
+		spinners[0] = new JSpinner(costumeMdl);
+		spinners[1] = new JSpinner(comLvlMdl);
 		setComboBoxAndSpinVals(charaDropDown, itemDropDowns, spinners, enemyParamInts);
 		//Set component properties
 		for (int boxCnt = 0; boxCnt < spinnerBoxes.length; boxCnt++) {

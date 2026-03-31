@@ -52,7 +52,7 @@ public class Launcher {
 	private static final Image OPEN = DEF_TK.getImage(ClassLoader.getSystemResource("img/open.png"));
 	private static final ImageIcon LOGO_ICO = new ImageIcon(LOGO.getScaledInstance(64, 64, Image.SCALE_SMOOTH));
 	
-	private static ParamContainer getParamContainerFromChooser(int gameModeIdx, boolean toggleMeteor) throws IOException {
+	private static ParamContainer getParamContainerFromChooser(int gameModeIdx, boolean toggleNeo) throws IOException {
 		ParamContainer pc = null;
 		JFileChooser chooser = new JFileChooser();
 		chooser.setDialogTitle("Open Folder with " + UltBatMeteor.MODE_NAMES[gameModeIdx] + " parameters...");
@@ -61,7 +61,7 @@ public class Launcher {
 		int result = chooser.showOpenDialog(null);
 		if (result == JFileChooser.APPROVE_OPTION) {
 			currDir = chooser.getSelectedFile();
-			pc = new ParamContainer(currDir, gameModeIdx, toggleMeteor);
+			pc = new ParamContainer(currDir, gameModeIdx, toggleNeo);
 			RandomAccessFile[] containers = pc.getContainers();
 			if (containers[0] == null) {
 				errorBeep();
@@ -170,7 +170,8 @@ public class Launcher {
 				try {
 					RandomAccessFile[] datFiles = container.getContainers(); 
 					if (datFiles != null) {
-						if (datFiles[0] != null) Selector.start(frame, minFrameSize, modeDropDown.getSelectedIndex(), toggles[1]);
+						if (datFiles[0] != null)
+							Selector.start(frame, minFrameSize, modeDropDown.getSelectedIndex(), toggles[1], toggles[0]);
 					}
 				}
 				catch (IOException e) {

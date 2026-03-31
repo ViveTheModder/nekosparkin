@@ -43,7 +43,7 @@ public class ParamContainer {
 	}
 	public void setBattleParams(byte[] params, int missionIdx) {
 		int size = toggleNeo ? UltBatNeo.BATTLE_PARAMS_SIZE : UltBatMeteor.BATTLE_PARAMS_SIZE[gameModeIdx];
-		System.arraycopy(params, 0, battleParams, missionIdx * size, size);
+		System.arraycopy(params, 0, battleParams, missionIdx * size, params.length);
 	}
 	public void setEnemyParams(byte[] params, int missionIdx) {
 		int size = toggleNeo ? UltBatNeo.NUM_ENEMIES[gameModeIdx] : UltBatMeteor.NUM_ENEMIES[gameModeIdx] * 44;

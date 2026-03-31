@@ -5,6 +5,7 @@ public class ParamHandler {
 		byte[] valBytes = new byte[4];
 		int numBits = 0;
 		if (bigEndian) {
+			//Same code as the Little Endian version; just the for-loop is changed (to go from right to left)
 			for (int i = 3; i > 0; i--) {
 				valBytes[i] = (byte) (val >> numBits);
 				numBits += 8;
@@ -12,6 +13,8 @@ public class ParamHandler {
 		}
 		else {
 			for (int i = 0; i < 4; i++) {
+				/* Literally the steps taken in the getVal() method, but the inverse:
+				 * shift right by 8 bits (1 byte) 4 times to get the bytes from left to right. */
 				valBytes[i] = (byte) (val >> numBits);
 				numBits += 8;
 			}

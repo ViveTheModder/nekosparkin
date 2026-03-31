@@ -2,6 +2,7 @@ package gui;
 //Nekosparkin: Mission Selector Class by ViveTheJoestar
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Image;
@@ -37,11 +38,12 @@ import javax.swing.event.ChangeListener;
 import cmd.CsvHandler;
 import cmd.ParamHandler;
 import cmd.UltBatMeteor;
+import cmd.UltBatNeo;
 /* TODO:
  * 1. Add character icons (from BT2 and BT3; retrieve them first - DONE) based on the mission's characters - DONE.
  * 2. Retrieve mission names for Survival and Course Battle - DONE.
  * 3. Make up mission names (or just disable the dropdown menu - DONE, for the launcher) for Sim Dragon and Ranking Battle - DONE.
- * 4. This is more for UltBatMeteor, but implement writing/editing mission parameters - DONE, PLEASE TEST!!
+ * 4. This is more for UltBatMeteor, but implement writing/editing mission parameters - DONE.
  * 5. Add listener to every character chip that opens up a new dialog to edit their parameters - DONE.
  * 6. Retrieve map icons (from BT2 and BT3) - DONE.
  * 7. Include battle parameters in UI (not just the character icons) - DONE.
@@ -49,26 +51,109 @@ import cmd.UltBatMeteor;
  * 9. Fix mission 75's name (in Mission 100) - DONE.
  * 10. Replace "Mission No." text with "Opponent No." for Sim Dragon and Ranking Battle - DONE.
  * 11. If the selector window is closed, PLEASE set the containers back to null - DONE.
- * 12. Add listeners for the Save and Save As buttons
- * --> ALMOST DONE. Just implements the battle parameters to be retrieved from memory. */
+ * 12. Add listeners for the Save and Save As buttons - DONE.
+ * 13. Edit saveAs() method to use the currDir variable from Launcher as the last opened directory - DONE.
+ * 14. If needed, search for any instance of UltBatMeteor.X and refactor code to include final variables from UltBatNeo.
+ */
 public class Selector {
 	private static final Image SAVE = Launcher.DEF_TK.getImage(ClassLoader.getSystemResource("img/save.png"));
 	private static final Image SAVE_AS = Launcher.DEF_TK.getImage(ClassLoader.getSystemResource("img/save-as.png"));
 	static byte[] battleParams, enemyParams;
 	
+	private static byte[] getBattleParamsFromUI(JComboBox<String>[] dd, JCheckBox[] cb, int gmIdx, boolean bt2, boolean be) {
+		int size = bt2 ? UltBatNeo.BATTLE_PARAMS_SIZE : UltBatMeteor.BATTLE_PARAM_TYPES.length * 4;
+		byte[] battleParams = new byte[size];
+		int paramVal = 0;
+		System.out.println(battleParams.length / 4);
+		for (int paramCnt = 0; paramCnt < battleParams.length / 4; paramCnt++) {
+			if (paramCnt == 1 || paramCnt == 5) {
+				if (cb[paramCnt / 5].isSelected()) paramVal = 1;
+				else paramVal = 0;
+			}
+			else {
+				if (paramCnt < dd.length) {
+					if (dd[paramCnt] != null) {
+						int prmIdx = dd[paramCnt].getSelectedIndex();
+						if (paramCnt == 0 || paramCnt == 3 || paramCnt == 4) {
+							int numPrmVals = dd[paramCnt].getItemCount();
+							if (prmIdx == numPrmVals - 1) paramVal = 998;
+						}
+						paramVal = prmIdx;
+					}
+				}
+			}
+			System.arraycopy(ParamHandler.getValBytes(paramVal, be), 0, battleParams, paramCnt * 4, 4);
+		}
+		return battleParams;
+	}
 	private static void save() throws IOException {
 		Launcher.container.writeParams();
 	}
 	private static void saveAs(int gameModeIdx) throws IOException {
 		JFileChooser chooser = new JFileChooser();
+		chooser.setCurrentDirectory(Launcher.currDir);
 		chooser.setDialogTitle("Save " + UltBatMeteor.MODE_NAMES[gameModeIdx] + "  parameters...");
 		chooser.setDialogType(JFileChooser.SAVE_DIALOG);
 		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		int result = chooser.showSaveDialog(null);
 		if (result == JFileChooser.APPROVE_OPTION) Launcher.container.writeParams(chooser.getSelectedFile());
 	}
+	private static void updateBatPrmUI(JComboBox<String>[] dd, JCheckBox[] cb, JPanel mp, int gmIdx, int mIdx, boolean be) throws IOException {
+		byte[] battleParams = Launcher.container.getBattleParams(mIdx);
+		byte[] paramBytes = new byte[4];
+		int numParams = ((UltBatMeteor.BATTLE_PARAMS_SIZE[gmIdx] - UltBatMeteor.NUM_ENEMIES[gmIdx] * 4) / 4);
+		for (int byteCnt = 0; byteCnt < numParams * 4; byteCnt += 4) {
+			int paramCnt = byteCnt / 4;
+			System.arraycopy(battleParams, byteCnt, paramBytes, 0, 4);
+			int param = ParamHandler.getVal(paramBytes, be);
+			if (paramCnt == 1 || paramCnt == 5) {
+				if (param == 1) cb[paramCnt / 5].setSelected(true);
+				else cb[paramCnt / 5].setSelected(false);
+			}
+			else {
+				if (dd[paramCnt] != null) dd[paramCnt].setSelectedIndex(param);
+			}
+		}
+		mp.revalidate();
+	}
+	private static void updateCharaImgs(JLabel[] lbl, ImageIcon[] ico, JPanel pnl, int[] chIds, int gm, int m, boolean bt2, boolean be)
+	throws IOException {
+		byte[] enemyParams = Launcher.container.getEnemyParams(m);
+		byte[] paramBytes = new byte[4];
+		String folderName = bt2 ? "bt2" : "bt3";
+		pnl.removeAll();
+		for (int i = 0; i < enemyParams.length; i += 4) {
+			int oppId = i / 44;
+			System.arraycopy(enemyParams, i, paramBytes, 0, 4);
+			if (i % 44 == 0) {
+				Box vertBox = Box.createVerticalBox();
+				chIds[oppId] = ParamHandler.getVal(paramBytes, be);
+				File imgFile = new File("chips/chara/" + folderName + "/" + chIds[oppId] + ".png");
+				Image img = ImageIO.read(imgFile);
+				ico[oppId] = new ImageIcon(img.getScaledInstance(64, 64, Image.SCALE_FAST));
+				lbl[oppId].setAlignmentX(JLabel.CENTER_ALIGNMENT);
+				lbl[oppId].setHorizontalAlignment(JLabel.CENTER);
+				lbl[oppId].setIcon(ico[oppId]);
+				JLabel oppIdLbl = new JLabel(oppId + 1 + "");
+				oppIdLbl.setForeground(Color.WHITE);
+				oppIdLbl.setFont(Launcher.HEADING);
+				//This was the only way to properly center the text inside the vertical box
+				Box oppIdLblBox = Box.createHorizontalBox();
+				oppIdLblBox.add(Box.createHorizontalGlue());
+				oppIdLblBox.add(oppIdLbl);
+				oppIdLblBox.add(Box.createHorizontalGlue());
+				//This was the only way to properly take up the excess space from the character panel
+				vertBox.add(Box.createVerticalGlue());
+				vertBox.add(oppIdLblBox);
+				vertBox.add(lbl[oppId]);
+				vertBox.add(Box.createVerticalGlue());
+				pnl.add(vertBox);
+			}
+		}
+		pnl.revalidate();
+	}
 	@SuppressWarnings("unchecked")
-	static void start(JFrame startFrame, Dimension minFrameSize, int gameModeIdx, boolean bigEndian) throws IOException {
+	static void start(JFrame startFrame, Dimension minFrameSize, int gameModeIdx, boolean bigEndian, boolean toggleBt2) throws IOException {
 		boolean isSrvOrRnk = gameModeIdx >= UltBatMeteor.SURVIVAL && gameModeIdx <= UltBatMeteor.CHALLENGE;
 		int[] charaIds = new int[UltBatMeteor.NUM_ENEMIES[gameModeIdx]];
 		battleParams = Launcher.container.getBattleParams();
@@ -95,13 +180,13 @@ public class Selector {
 			names = CsvHandler.getParamNames(namesCsv);
 		}
 		//Set components
-		Box charaBox = Box.createHorizontalBox();
-		Box spinnerBox = Box.createHorizontalBox();
+		Box applyBox = Box.createHorizontalBox();
+		Box charaBox = Box.createHorizontalBox(), spinnerBox = Box.createHorizontalBox();
 		ImageIcon saveAsIco = new ImageIcon(SAVE_AS.getScaledInstance(32, 32, Image.SCALE_SMOOTH));
 		ImageIcon saveIco = new ImageIcon(SAVE.getScaledInstance(32, 32, Image.SCALE_SMOOTH));
 		ImageIcon[] charaChips = new ImageIcon[UltBatMeteor.NUM_ENEMIES[gameModeIdx]];
 		SpinnerNumberModel missionModel = new SpinnerNumberModel(1, 1, UltBatMeteor.NUM_MISSIONS[gameModeIdx], 1);
-		JButton saveBtn = new JButton("Save"), saveAsBtn = new JButton("Save As");
+		JButton apply = new JButton("Apply"), saveBtn = new JButton("Save"), saveAsBtn = new JButton("Save As");
 		JComboBox<String> missionDropDown = new JComboBox<String>(names);
 		JComboBox<String>[] batPrmDropDown = new JComboBox[batPrmCsvs.length];
 		JCheckBox[] toggles = new JCheckBox[2];
@@ -113,6 +198,7 @@ public class Selector {
 		for (int charaCnt = 0; charaCnt < charaLabels.length; charaCnt++) {
 			final int index = charaCnt;
 			charaLabels[charaCnt] = new JLabel();
+			charaLabels[charaCnt].setCursor(new Cursor(Cursor.HAND_CURSOR));
 			charaLabels[charaCnt].addMouseListener(new MouseAdapter() {
 				@Override
 				public void mouseClicked(MouseEvent me) {
@@ -140,6 +226,12 @@ public class Selector {
 		JScrollPane charaScroll = new JScrollPane(charaBoxPanel);
 		JToolBar toolBar = new JToolBar();
 		//Set component properties
+		apply.setAlignmentX(JButton.CENTER_ALIGNMENT);
+		apply.setBackground(Launcher.TX_COLOR);
+		apply.setContentAreaFilled(false);
+		apply.setFont(Launcher.HEADING);
+		apply.setForeground(Color.WHITE);
+		apply.setOpaque(true);
 		battlePanel.setBackground(Launcher.BG_COLOR);
 		battleScroll.setBorder(BorderFactory.createLineBorder(Launcher.BG_COLOR));
 		charaPanel.setBackground(Launcher.FG_COLOR);
@@ -157,6 +249,9 @@ public class Selector {
 		saveItem.setIcon(saveIco);
 		saveBtn.setIcon(saveIco);
 		//Add components
+		applyBox.add(Box.createHorizontalGlue());
+		applyBox.add(apply);
+		applyBox.add(Box.createHorizontalGlue());
 		battlePanel.add(Box.createVerticalGlue());
 		for (int compCnt = 0; compCnt < batPrmNames.length; compCnt++) {
 			JLabel compName = new JLabel(UltBatMeteor.BATTLE_PARAM_NAMES[compCnt] + ": ");
@@ -189,6 +284,8 @@ public class Selector {
 			}
 			battlePanel.add(new JLabel(" "));
 		}
+		battlePanel.add(applyBox);
+		battlePanel.add(new JLabel(" "));
 		battlePanel.add(Box.createVerticalGlue());
 		charaBox.add(Box.createHorizontalGlue());
 		charaBox.add(charaPanel);
@@ -226,7 +323,9 @@ public class Selector {
 					int missionIdx = (int) missionSelect.getValue() - 1;
 					if (csvIndex >= 0) missionDropDown.setSelectedIndex(missionIdx);
 					updateBatPrmUI(batPrmDropDown, toggles, missionPanel, gameModeIdx, missionIdx, bigEndian);
-					updateCharaImgs(charaLabels, charaChips, charaPanel, charaIds, gameModeIdx, missionIdx, bigEndian);
+					updateCharaImgs(charaLabels, charaChips, charaPanel, charaIds, gameModeIdx, missionIdx, toggleBt2, bigEndian);
+					//byte[] currBatPrms = getBattleParamsFromUI(batPrmDropDown, toggles, gameModeIdx, toggleBt2, bigEndian);
+					//Launcher.container.setBattleParams(currBatPrms, missionIdx);
 				}
 				catch (IOException e) {
 					Launcher.error(e);
@@ -234,10 +333,20 @@ public class Selector {
 			}	
 		});
 		//Add action listeners
+		apply.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent ae) {
+				int missionIdx = (int) missionSelect.getValue() - 1;
+				byte[] currBatPrms = getBattleParamsFromUI(batPrmDropDown, toggles, gameModeIdx, toggleBt2, bigEndian);
+				Launcher.container.setBattleParams(currBatPrms, missionIdx);
+			}
+		});
 		saveAsBtn.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
 				try {
+					byte[] currBatPrms = getBattleParamsFromUI(batPrmDropDown, toggles, gameModeIdx, toggleBt2, bigEndian);
+					Launcher.container.setBattleParams(currBatPrms, (int) missionSelect.getValue() - 1);
 					saveAs(gameModeIdx);
 				} catch (IOException e) {
 					Launcher.error(e);
@@ -248,6 +357,8 @@ public class Selector {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
 				try {
+					byte[] currBatPrms = getBattleParamsFromUI(batPrmDropDown, toggles, gameModeIdx, toggleBt2, bigEndian);
+					Launcher.container.setBattleParams(currBatPrms, (int) missionSelect.getValue() - 1);
 					save();
 				} catch (IOException e) {
 					Launcher.error(e);
@@ -264,7 +375,7 @@ public class Selector {
 		});
 		//Set first-time character chips
 		updateBatPrmUI(batPrmDropDown, toggles, missionPanel, gameModeIdx, 0, bigEndian);
-		updateCharaImgs(charaLabels, charaChips, charaPanel, charaIds, gameModeIdx, 0, bigEndian);
+		updateCharaImgs(charaLabels, charaChips, charaPanel, charaIds, gameModeIdx, 0, toggleBt2, bigEndian);
 		//Set frame properties
 		editFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		editFrame.setIconImage(Launcher.LOGO);
@@ -272,58 +383,5 @@ public class Selector {
 		editFrame.setLocation(x, y);
 		editFrame.setMinimumSize(minFrameSize);
 		editFrame.setVisible(true);
-	}
-	private static void updateBatPrmUI(JComboBox<String>[] dd, JCheckBox[] cb, JPanel mp, int gmIdx, int mIdx, boolean be) throws IOException {
-		byte[] battleParams = Launcher.container.getBattleParams(mIdx);
-		byte[] paramBytes = new byte[4];
-		int numParams = ((UltBatMeteor.BATTLE_PARAMS_SIZE[gmIdx] - UltBatMeteor.NUM_ENEMIES[gmIdx] * 4) / 4);
-		for (int byteCnt = 0; byteCnt < numParams * 4; byteCnt += 4) {
-			int paramCnt = byteCnt / 4;
-			System.arraycopy(battleParams, byteCnt, paramBytes, 0, 4);
-			int param = ParamHandler.getVal(paramBytes, be);
-			if (paramCnt == 1 || paramCnt == 5) {
-				if (param == 1) cb[paramCnt / 5].setSelected(true);
-				else cb[paramCnt / 5].setSelected(false);
-			}
-			else {
-				if (dd[paramCnt] != null) dd[paramCnt].setSelectedIndex(param);
-			}
-		}
-		mp.revalidate();
-	}
-	private static void updateCharaImgs(JLabel[] lbl, ImageIcon[] ico, JPanel pnl, int[] chIds, int gm, int m, boolean be)
-	throws IOException {
-		byte[] enemyParams = Launcher.container.getEnemyParams(m);
-		byte[] paramBytes = new byte[4];
-		pnl.removeAll();
-		for (int i = 0; i < enemyParams.length; i += 4) {
-			int oppId = i / 44;
-			System.arraycopy(enemyParams, i, paramBytes, 0, 4);
-			if (i % 44 == 0) {
-				Box vertBox = Box.createVerticalBox();
-				chIds[oppId] = ParamHandler.getVal(paramBytes, be);
-				File imgFile = new File("chips/chara/bt3/" + chIds[oppId] + ".png");
-				Image img = ImageIO.read(imgFile);
-				ico[oppId] = new ImageIcon(img.getScaledInstance(64, 64, Image.SCALE_FAST));
-				lbl[oppId].setAlignmentX(JLabel.CENTER_ALIGNMENT);
-				lbl[oppId].setHorizontalAlignment(JLabel.CENTER);
-				lbl[oppId].setIcon(ico[oppId]);
-				JLabel oppIdLbl = new JLabel(oppId + 1 + "");
-				oppIdLbl.setForeground(Color.WHITE);
-				oppIdLbl.setFont(Launcher.HEADING);
-				//This was the only way to properly center the text inside the vertical box
-				Box oppIdLblBox = Box.createHorizontalBox();
-				oppIdLblBox.add(Box.createHorizontalGlue());
-				oppIdLblBox.add(oppIdLbl);
-				oppIdLblBox.add(Box.createHorizontalGlue());
-				//This was the only way to properly take up the excess space from the character panel
-				vertBox.add(Box.createVerticalGlue());
-				vertBox.add(oppIdLblBox);
-				vertBox.add(lbl[oppId]);
-				vertBox.add(Box.createVerticalGlue());
-				pnl.add(vertBox);
-			}
-		}
-		pnl.revalidate();
 	}
 }

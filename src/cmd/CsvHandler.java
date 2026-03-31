@@ -7,29 +7,6 @@ import java.util.Arrays;
 import java.util.Scanner;
 
 public class CsvHandler {
-	/* Hilarious flaw for this method: if the last line is empty, BAM! Exception.
-	private static int getNumRows(File csv) throws IOException {
-		byte[] charBytes = new byte[2];
-		int fileSize = (int) csv.length();
-		RandomAccessFile raf = new RandomAccessFile(csv, "r");
-		for (int pos = fileSize - 2; pos > 0; pos--) {
-			raf.seek(pos);
-			raf.read(charBytes);
-			//Check for presence of new lines
-			if (charBytes[0] == 0x0D && charBytes[1] == 0x0A) {
-				//Calculate number of bytes for last row contents
-				byte[] rowNumBytes = new byte[fileSize - pos - 2];
-				raf.read(rowNumBytes);
-				String rowNumStr = new String(rowNumBytes);
-				//Only get the last row's ID, then add 1 and return it
-				int rowNum = Integer.parseInt(rowNumStr.split(",")[0]);
-				raf.close();
-				return rowNum + 1;
-			}
-		}
-		raf.close();
-		return 0;
-	} */
 	private static int getNumRows(File csv) throws IOException {
 		byte[] charBytes = new byte[2];
 		int rowCnt = 0, fileSize = (int) csv.length();
