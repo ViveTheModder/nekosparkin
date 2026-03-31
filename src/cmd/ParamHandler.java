@@ -1,6 +1,23 @@
 package cmd;
 //Nekosparkin: Parameter Handler Class by ViveTheJoestar
 public class ParamHandler {
+	public static byte[] getValBytes(int val, boolean bigEndian) {
+		byte[] valBytes = new byte[4];
+		int numBits = 0;
+		if (bigEndian) {
+			for (int i = 3; i > 0; i--) {
+				valBytes[i] = (byte) (val >> numBits);
+				numBits += 8;
+			}
+		}
+		else {
+			for (int i = 0; i < 4; i++) {
+				valBytes[i] = (byte) (val >> numBits);
+				numBits += 8;
+			}
+		}
+		return valBytes;
+	}
 	public static int getVal(byte[] intBytes, boolean bigEndian) {
 		int numBits = 24, output = 0;
 		for (int i = 0; i < 4; i++) {

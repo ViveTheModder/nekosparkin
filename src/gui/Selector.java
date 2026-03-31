@@ -5,6 +5,8 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Image;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
@@ -19,6 +21,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -38,7 +41,7 @@ import cmd.UltBatMeteor;
  * 1. Add character icons (from BT2 and BT3; retrieve them first - DONE) based on the mission's characters - DONE.
  * 2. Retrieve mission names for Survival and Course Battle - DONE.
  * 3. Make up mission names (or just disable the dropdown menu - DONE, for the launcher) for Sim Dragon and Ranking Battle - DONE.
- * 4. This is more for UltBatMeteor, but implement writing/editing mission parameters - IMPORTANT!!
+ * 4. This is more for UltBatMeteor, but implement writing/editing mission parameters - DONE, PLEASE TEST!!
  * 5. Add listener to every character chip that opens up a new dialog to edit their parameters - DONE.
  * 6. Retrieve map icons (from BT2 and BT3) - DONE.
  * 7. Include battle parameters in UI (not just the character icons) - DONE.
@@ -46,16 +49,30 @@ import cmd.UltBatMeteor;
  * 9. Fix mission 75's name (in Mission 100) - DONE.
  * 10. Replace "Mission No." text with "Opponent No." for Sim Dragon and Ranking Battle - DONE.
  * 11. If the selector window is closed, PLEASE set the containers back to null - DONE.
- * 12. Add listeners for the Save and Save As buttons to retrieve the currently loaded battle parameters - IMPORTANT!! */
+ * 12. Add listeners for the Save and Save As buttons
+ * --> ALMOST DONE. Just implements the battle parameters to be retrieved from memory. */
 public class Selector {
 	private static final Image SAVE = Launcher.DEF_TK.getImage(ClassLoader.getSystemResource("img/save.png"));
 	private static final Image SAVE_AS = Launcher.DEF_TK.getImage(ClassLoader.getSystemResource("img/save-as.png"));
 	static byte[] battleParams, enemyParams;
+	
+	private static void save() throws IOException {
+		Launcher.container.writeParams();
+	}
+	private static void saveAs(int gameModeIdx) throws IOException {
+		JFileChooser chooser = new JFileChooser();
+		chooser.setDialogTitle("Save " + UltBatMeteor.MODE_NAMES[gameModeIdx] + "  parameters...");
+		chooser.setDialogType(JFileChooser.SAVE_DIALOG);
+		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+		int result = chooser.showSaveDialog(null);
+		if (result == JFileChooser.APPROVE_OPTION) Launcher.container.writeParams(chooser.getSelectedFile());
+	}
 	@SuppressWarnings("unchecked")
 	static void start(JFrame startFrame, Dimension minFrameSize, int gameModeIdx, boolean bigEndian) throws IOException {
 		boolean isSrvOrRnk = gameModeIdx >= UltBatMeteor.SURVIVAL && gameModeIdx <= UltBatMeteor.CHALLENGE;
-		enemyParams = UltBatMeteor.getMissionParams(Launcher.containers, gameModeIdx, 0, true);
 		int[] charaIds = new int[UltBatMeteor.NUM_ENEMIES[gameModeIdx]];
+		battleParams = Launcher.container.getBattleParams();
+		enemyParams = Launcher.container.getEnemyParams();
 		startFrame.setEnabled(false);
 		int x = startFrame.getX() + startFrame.getWidth() + 10;
 		int y = startFrame.getY();
@@ -101,8 +118,10 @@ public class Selector {
 				public void mouseClicked(MouseEvent me) {
 					try {
 						byte[] charaParams = new byte[44];
-						System.arraycopy(enemyParams, index * 44, charaParams, 0, 44);
-						CharaEditor.start(editFrame, startFrame, csvArray, charaParams, bigEndian);
+						int missionCnt = (int) missionSelect.getValue() - 1;
+						int pos = (missionCnt * 44 * UltBatMeteor.NUM_ENEMIES[gameModeIdx]) + (index * 44);
+						System.arraycopy(enemyParams, pos, charaParams, 0, 44);
+						CharaEditor.start(editFrame, startFrame, charaLabels[index], csvArray, charaParams, pos, bigEndian);
 					} catch (IOException e) {
 						Launcher.error(e);
 					}
@@ -208,16 +227,37 @@ public class Selector {
 					if (csvIndex >= 0) missionDropDown.setSelectedIndex(missionIdx);
 					updateBatPrmUI(batPrmDropDown, toggles, missionPanel, gameModeIdx, missionIdx, bigEndian);
 					updateCharaImgs(charaLabels, charaChips, charaPanel, charaIds, gameModeIdx, missionIdx, bigEndian);
-				} catch (IOException e) {
+				}
+				catch (IOException e) {
 					Launcher.error(e);
 				}
 			}	
+		});
+		//Add action listeners
+		saveAsBtn.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent ae) {
+				try {
+					saveAs(gameModeIdx);
+				} catch (IOException e) {
+					Launcher.error(e);
+				}
+			}
+		});
+		saveBtn.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent ae) {
+				try {
+					save();
+				} catch (IOException e) {
+					Launcher.error(e);
+				}
+			}
 		});
 		//Add window listener
 		editFrame.addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosing(WindowEvent we) {
-				Launcher.containers = null;
 				startFrame.setEnabled(true);
 				editFrame.dispose();
 			}
@@ -233,9 +273,8 @@ public class Selector {
 		editFrame.setMinimumSize(minFrameSize);
 		editFrame.setVisible(true);
 	}
-	static void updateBatPrmUI(JComboBox<String>[] dd, JCheckBox[] cb, JPanel mp, int gmIdx, int mIdx, boolean be) throws IOException {
-		//This method should be rewritten, so that the parameters are only retrieved once.
-		byte[] battleParams = UltBatMeteor.getMissionParams(Launcher.containers, gmIdx, mIdx, false);
+	private static void updateBatPrmUI(JComboBox<String>[] dd, JCheckBox[] cb, JPanel mp, int gmIdx, int mIdx, boolean be) throws IOException {
+		byte[] battleParams = Launcher.container.getBattleParams(mIdx);
 		byte[] paramBytes = new byte[4];
 		int numParams = ((UltBatMeteor.BATTLE_PARAMS_SIZE[gmIdx] - UltBatMeteor.NUM_ENEMIES[gmIdx] * 4) / 4);
 		for (int byteCnt = 0; byteCnt < numParams * 4; byteCnt += 4) {
@@ -252,9 +291,9 @@ public class Selector {
 		}
 		mp.revalidate();
 	}
-	static void updateCharaImgs(JLabel[] lbl, ImageIcon[] ico, JPanel pnl, int[] chIds, int gm, int m, boolean be)
+	private static void updateCharaImgs(JLabel[] lbl, ImageIcon[] ico, JPanel pnl, int[] chIds, int gm, int m, boolean be)
 	throws IOException {
-		enemyParams = UltBatMeteor.getMissionParams(Launcher.containers, gm, m, true);
+		byte[] enemyParams = Launcher.container.getEnemyParams(m);
 		byte[] paramBytes = new byte[4];
 		pnl.removeAll();
 		for (int i = 0; i < enemyParams.length; i += 4) {

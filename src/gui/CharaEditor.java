@@ -2,14 +2,18 @@ package gui;
 import java.awt.Color;
 //Nekosparkin: Character Editor class by ViveTheJoestar
 import java.awt.Dimension;
+import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
+
+import javax.imageio.ImageIO;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
@@ -22,7 +26,7 @@ import cmd.ParamHandler;
 /* TODO:
  * 1. Add window listener (to unlock the selector frame) when the editor is closed - DONE. 
  * 2. Finish (and test) the UI (in terms of appearance and functionality) - DONE.
- * 3. Finish the action listener for the Apply button (make sure it carries over changes to static enemyParams array). */
+ * 3. Finish the action listener for the Apply button (make sure it carries over changes to static enemyParams array) - DONE. */
 public class CharaEditor {
 	public static int[] getComboBoxAndSpinVals(JComboBox<String> charaCb, JComboBox<String>[] itemCbs, JSpinner[] spins) {
 		int[] ints = new int[11];
@@ -54,20 +58,20 @@ public class CharaEditor {
 		}
 	}
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static void start(JFrame selectorFrame, JFrame startFrame, File[] csvArray, byte[] prm, boolean be) throws IOException {
-		selectorFrame.setEnabled(false);
+	public static void start(JFrame selF, JFrame startF, JLabel chip, File[] csvs, byte[] prm, int pos, boolean be) throws IOException {
+		selF.setEnabled(false);
 		byte[] paramBytes = new byte[4];
-		int searchResult = CsvHandler.getCsvSearchResult(csvArray, "chara");
+		int searchResult = CsvHandler.getCsvSearchResult(csvs, "chara");
 		int[] enemyParamInts = new int[prm.length / 4];
 		for (int i = 0; i < enemyParamInts.length; i++) {
 			System.arraycopy(prm, i * 4, paramBytes, 0, 4);
 			enemyParamInts[i] = ParamHandler.getVal(paramBytes, false);
 		}
-		String[] charaNames = CsvHandler.getParamNames(csvArray[searchResult]);
+		String[] charaNames = CsvHandler.getParamNames(csvs[searchResult]);
 		String[] generalNames = { "Costume: ", "COM Level: " };
 		String[] headingNames = { "General: ", "Z-Items: " };
-		searchResult = CsvHandler.getCsvSearchResult(csvArray, "item");
-		String[] itemNames = CsvHandler.getParamNames(csvArray[searchResult]);
+		searchResult = CsvHandler.getCsvSearchResult(csvs, "item");
+		String[] itemNames = CsvHandler.getParamNames(csvs[searchResult]);
 		//Set components
 		Box charaBox = Box.createHorizontalBox();
 		Box[] spinnerBoxes = new Box[2];
@@ -149,22 +153,49 @@ public class CharaEditor {
 		apply.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
-				
+				try {
+					int numChars = charaDropDown.getItemCount();
+					int numItems = itemDropDowns[0].getItemCount();
+					int[] valArray = new int[11];
+					valArray[0] = charaDropDown.getSelectedIndex();
+					if (valArray[0] == numChars - 2) valArray[0] = 999;
+					else if (valArray[0] == numChars - 1) valArray[0] = 998;
+					File imgFile = new File("chips/chara/bt3/" + valArray[0] + ".png");
+					Image img = ImageIO.read(imgFile);
+					ImageIcon ico = new ImageIcon(img.getScaledInstance(64, 64, Image.SCALE_FAST));
+					chip.setIcon(ico);
+					valArray[1] = (int) spinners[0].getValue() - 1;
+					valArray[2] = (int) spinners[1].getValue();
+					for (int itemCnt = 0; itemCnt < 8; itemCnt++) {
+						valArray[itemCnt + 3] = itemDropDowns[itemCnt].getSelectedIndex();
+						if (valArray[itemCnt + 3] == numItems - 1)
+							valArray[itemCnt + 3] = 999;
+					}
+					for (int valCnt = 0; valCnt < valArray.length; valCnt++) {
+						byte[] valBytes = ParamHandler.getValBytes(valArray[valCnt], be);
+						System.arraycopy(valBytes, 0, Selector.enemyParams, pos + (valCnt * 4), 4);
+					}
+					selF.setEnabled(true);
+					frame.dispose();
+				}
+				catch (IOException e) {
+					Launcher.error(e);
+				}
 			}
 		});
 		//Add window listener
 		frame.addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosing(WindowEvent we) {
-				selectorFrame.setEnabled(true);
+				selF.setEnabled(true);
 				frame.dispose();
 			}
 		});
 		//Set frame properties
 		frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		frame.setSize(minFrameSize);
-		int x = startFrame.getX() - frame.getWidth() - 10;
-		int y = selectorFrame.getY();
+		int x = startF.getX() - frame.getWidth() - 10;
+		int y = startF.getY();
 		frame.setLocation(x, y);
 		frame.setTitle("Edit Character");
 		frame.setVisible(true);

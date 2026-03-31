@@ -29,6 +29,8 @@ import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.UIManager;
+
+import cmd.ParamContainer;
 import cmd.UltBatMeteor;
 /* TODO:
  * 1. Find images to replace the text in the toolbar buttons with. - DONE
@@ -38,7 +40,7 @@ import cmd.UltBatMeteor;
  * 5. Add Wii support (toggle button in toolbar) - DONE. */
 public class Launcher { 
 	static File currDir = null;
-	static RandomAccessFile[] containers = null;
+	static ParamContainer container = null;
 	static final Toolkit DEF_TK = Toolkit.getDefaultToolkit();
 	static final Image LOGO = DEF_TK.getImage(ClassLoader.getSystemResource("img/logo.png"));
 	static final String TITLE = "Nekosparkin";
@@ -50,8 +52,8 @@ public class Launcher {
 	private static final Image OPEN = DEF_TK.getImage(ClassLoader.getSystemResource("img/open.png"));
 	private static final ImageIcon LOGO_ICO = new ImageIcon(LOGO.getScaledInstance(64, 64, Image.SCALE_SMOOTH));
 	
-	private static RandomAccessFile[] getContainersFromChooser(int gameModeIdx) throws IOException {
-		RandomAccessFile[] containers = null;
+	private static ParamContainer getParamContainerFromChooser(int gameModeIdx, boolean toggleMeteor) throws IOException {
+		ParamContainer pc = null;
 		JFileChooser chooser = new JFileChooser();
 		chooser.setDialogTitle("Open Folder with " + UltBatMeteor.MODE_NAMES[gameModeIdx] + " parameters...");
 		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -59,24 +61,25 @@ public class Launcher {
 		int result = chooser.showOpenDialog(null);
 		if (result == JFileChooser.APPROVE_OPTION) {
 			currDir = chooser.getSelectedFile();
-			containers = UltBatMeteor.getMissionParamContainers(currDir, gameModeIdx);
+			pc = new ParamContainer(currDir, gameModeIdx, toggleMeteor);
+			RandomAccessFile[] containers = pc.getContainers();
 			if (containers[0] == null) {
 				errorBeep();
 				String err = "Chosen folder contains no valid " + UltBatMeteor.MODE_NAMES[gameModeIdx] + " parameters!";
 				JOptionPane.showMessageDialog(null, err, TITLE, JOptionPane.ERROR_MESSAGE);
 			}
 		}
-		return containers;
+		return pc;
 	}
 	private static void errorBeep() {
 		Runnable runWinErrorSnd = (Runnable) DEF_TK.getDesktopProperty("win.sound.exclamation");
 		if (runWinErrorSnd!=null) runWinErrorSnd.run();
 	}
-	private static void open(JComboBox<String> modeDropDown, JPanel panel) {
+	private static void open(JComboBox<String> modeDropDown, JPanel panel, boolean toggleMeteor) {
 		try {
 			((JLabel) modeDropDown.getRenderer()).setHorizontalAlignment(JLabel.CENTER);
 			panel.repaint();
-			containers = getContainersFromChooser(modeDropDown.getSelectedIndex());
+			container = getParamContainerFromChooser(modeDropDown.getSelectedIndex(), toggleMeteor);
 			((JLabel) modeDropDown.getRenderer()).setHorizontalAlignment(JLabel.CENTER);
 			panel.repaint();
 		} catch (IOException e) {
@@ -165,8 +168,9 @@ public class Launcher {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
 				try {
-					if (containers != null) {
-						if (containers[0] != null) Selector.start(frame, minFrameSize, modeDropDown.getSelectedIndex(), toggles[1]);
+					RandomAccessFile[] datFiles = container.getContainers(); 
+					if (datFiles != null) {
+						if (datFiles[0] != null) Selector.start(frame, minFrameSize, modeDropDown.getSelectedIndex(), toggles[1]);
 					}
 				}
 				catch (IOException e) {
@@ -193,13 +197,13 @@ public class Launcher {
 		openBtn.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
-				open(modeDropDown, modePanel);
+				open(modeDropDown, modePanel, toggles[0]);
 			}
 		});
 		openItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
-				open(modeDropDown, modePanel);
+				open(modeDropDown, modePanel, toggles[0]);
 			}
 		});
 		//Set frame properties
