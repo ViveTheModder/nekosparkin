@@ -41,18 +41,14 @@ import cmd.UltBatMeteor;
 public class Launcher { 
 	static File currDir = null;
 	static ParamContainer container = null;
-	static final Toolkit DEF_TK = Toolkit.getDefaultToolkit();
-	static final Image LOGO = DEF_TK.getImage(ClassLoader.getSystemResource("img/logo.png"));
 	static final String TITLE = "Nekosparkin";
 	static final Color BG_COLOR = new Color(138, 208, 242);
 	static final Color FG_COLOR = new Color(7, 129, 163);
 	static final Color TX_COLOR = new Color(193, 34, 100);
 	static final Font HEADING = new Font("Tahoma", Font.BOLD, 16);
 	static final Font SUBHEADING = new Font("Tahoma", Font.PLAIN, 13);
-	private static final Image OPEN = DEF_TK.getImage(ClassLoader.getSystemResource("img/open.png"));
-	private static final ImageIcon LOGO_ICO = new ImageIcon(LOGO.getScaledInstance(64, 64, Image.SCALE_SMOOTH));
 	
-	private static ParamContainer getParamContainerFromChooser(int gameModeIdx, boolean toggleNeo) throws IOException {
+	private static ParamContainer getParamContainerFromChooser(Toolkit tk, int gameModeIdx, boolean toggleNeo) throws IOException {
 		ParamContainer pc = null;
 		JFileChooser chooser = new JFileChooser();
 		chooser.setDialogTitle("Open Folder with " + UltBatMeteor.MODE_NAMES[gameModeIdx] + " parameters...");
@@ -64,41 +60,44 @@ public class Launcher {
 			pc = new ParamContainer(currDir, gameModeIdx, toggleNeo);
 			RandomAccessFile[] containers = pc.getContainers();
 			if (containers[0] == null) {
-				errorBeep();
+				errorBeep(tk);
 				String err = "Chosen folder contains no valid " + UltBatMeteor.MODE_NAMES[gameModeIdx] + " parameters!";
 				JOptionPane.showMessageDialog(null, err, TITLE, JOptionPane.ERROR_MESSAGE);
 			}
 		}
 		return pc;
 	}
-	private static void errorBeep() {
-		Runnable runWinErrorSnd = (Runnable) DEF_TK.getDesktopProperty("win.sound.exclamation");
+	private static void errorBeep(Toolkit tk) {
+		Runnable runWinErrorSnd = (Runnable) tk.getDesktopProperty("win.sound.exclamation");
 		if (runWinErrorSnd!=null) runWinErrorSnd.run();
 	}
-	private static void open(JComboBox<String> modeDropDown, JPanel panel, boolean toggleMeteor) {
+	private static void open(JComboBox<String> modeDropDown, JPanel panel, Toolkit tk, boolean toggleNeo) {
 		try {
 			((JLabel) modeDropDown.getRenderer()).setHorizontalAlignment(JLabel.CENTER);
 			panel.repaint();
-			container = getParamContainerFromChooser(modeDropDown.getSelectedIndex(), toggleMeteor);
+			container = getParamContainerFromChooser(tk, modeDropDown.getSelectedIndex(), toggleNeo);
 			((JLabel) modeDropDown.getRenderer()).setHorizontalAlignment(JLabel.CENTER);
 			panel.repaint();
 		} catch (IOException e) {
-			error(e);
+			error(e, tk);
 		}
 	}
-	private static void start() {
+	private static void start(Toolkit tk) {
 		//Tired of using static variables, sorry...
 		final boolean[] toggles = new boolean[2];
+		Image logo = tk.getImage(ClassLoader.getSystemResource("img/logo.png"));
+		Image open = tk.getImage(ClassLoader.getSystemResource("img/open.png"));
+		ImageIcon logoIco = new ImageIcon(logo.getScaledInstance(64, 64, Image.SCALE_SMOOTH));
 		String[] imgNames = {"bt3.png", "bt2.png", "ps2.png", "wii.png"};
 		//Set components
 		Box modeBox = Box.createHorizontalBox();
 		Dimension minFrameSize = new Dimension(700, 400);
-		ImageIcon openIco = new ImageIcon(OPEN.getScaledInstance(32, 32, Image.SCALE_SMOOTH));
+		ImageIcon openIco = new ImageIcon(open.getScaledInstance(32, 32, Image.SCALE_SMOOTH));
 		JToggleButton[] toggleBtns = new JToggleButton[2];
 		Image[] toggleImgs = new Image[toggleBtns.length * 2];
 		ImageIcon[] toggleIcos = new ImageIcon[toggleBtns.length * 2];
 		for (int icoCnt = 0; icoCnt < toggleIcos.length; icoCnt++) {
-			toggleImgs[icoCnt] = DEF_TK.getImage(ClassLoader.getSystemResource("img/" + imgNames[icoCnt]));
+			toggleImgs[icoCnt] = tk.getImage(ClassLoader.getSystemResource("img/" + imgNames[icoCnt]));
 			toggleIcos[icoCnt] = new ImageIcon(toggleImgs[icoCnt].getScaledInstance(48, 48, Image.SCALE_SMOOTH));
 			if (icoCnt % 2 == 0) toggleBtns[icoCnt / 2] = new JToggleButton(toggleIcos[icoCnt]);
 		}
@@ -161,7 +160,7 @@ public class Launcher {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
 				String msg = "Program made by ViveTheJoestar\nIcon made by SpideyGirl";
-				JOptionPane.showMessageDialog(frame, msg, TITLE, JOptionPane.INFORMATION_MESSAGE, LOGO_ICO);
+				JOptionPane.showMessageDialog(frame, msg, TITLE, JOptionPane.INFORMATION_MESSAGE, logoIco);
 			}
 		});
 		editBtn.addActionListener(new ActionListener() {
@@ -171,11 +170,11 @@ public class Launcher {
 					RandomAccessFile[] datFiles = container.getContainers(); 
 					if (datFiles != null) {
 						if (datFiles[0] != null)
-							Selector.start(frame, minFrameSize, modeDropDown.getSelectedIndex(), toggles[1], toggles[0]);
+							Selector.start(frame, minFrameSize, logo, tk, modeDropDown.getSelectedIndex(), toggles[1], toggles[0]);
 					}
 				}
 				catch (IOException e) {
-					errorBeep();
+					errorBeep(tk);
 					JOptionPane.showMessageDialog(null, e.getClass().getSimpleName() + ": " + e.getMessage(), TITLE, 0);
 				}
 			}
@@ -198,36 +197,37 @@ public class Launcher {
 		openBtn.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
-				open(modeDropDown, modePanel, toggles[0]);
+				open(modeDropDown, modePanel, tk, toggles[0]);
 			}
 		});
 		openItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
-				open(modeDropDown, modePanel, toggles[0]);
+				open(modeDropDown, modePanel, tk, toggles[0]);
 			}
 		});
 		//Set frame properties
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		frame.setIconImage(LOGO);
+		frame.setIconImage(logo);
 		frame.setJMenuBar(menuBar);
 		frame.setMinimumSize(minFrameSize);
 		frame.setLocationRelativeTo(null);
 		frame.setVisible(true);
 	}
 	
-	public static void error(Exception e) {
-		errorBeep();
+	public static void error(Exception e, Toolkit tk) {
+		errorBeep(tk);
 		String err = e.getClass().getSimpleName() + ": " + e.getMessage();
 		JOptionPane.showMessageDialog(null, err, TITLE + " - Exception", JOptionPane.ERROR_MESSAGE);
 	}
 	public static void main(String[] args) {
+		Toolkit tk = Toolkit.getDefaultToolkit();
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-			start();
+			start(tk);
 		}
 		catch (Exception e) {
-			error(e);
+			error(e, tk);
 		}
 	}
 }

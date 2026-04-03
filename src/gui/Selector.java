@@ -6,6 +6,7 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Image;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -53,18 +54,15 @@ import cmd.UltBatNeo;
  * 11. If the selector window is closed, PLEASE set the containers back to null - DONE.
  * 12. Add listeners for the Save and Save As buttons - DONE.
  * 13. Edit saveAs() method to use the currDir variable from Launcher as the last opened directory - DONE.
- * 14. If needed, search for any instance of UltBatMeteor.X and refactor code to include final variables from UltBatNeo.
+ * 14. If needed, search for any instance of UltBatMeteor.X and refactor code to include final variables from UltBatNeo. - DONE
  */
 public class Selector {
-	private static final Image SAVE = Launcher.DEF_TK.getImage(ClassLoader.getSystemResource("img/save.png"));
-	private static final Image SAVE_AS = Launcher.DEF_TK.getImage(ClassLoader.getSystemResource("img/save-as.png"));
 	static byte[] battleParams, enemyParams;
 	
 	private static byte[] getBattleParamsFromUI(JComboBox<String>[] dd, JCheckBox[] cb, int gmIdx, boolean bt2, boolean be) {
-		int size = bt2 ? UltBatNeo.BATTLE_PARAMS_SIZE : UltBatMeteor.BATTLE_PARAM_TYPES.length * 4;
+		int size = (bt2 ? UltBatNeo.BATTLE_PARAMS_SIZE : UltBatMeteor.BATTLE_PARAM_TYPES.length) * 4;
 		byte[] battleParams = new byte[size];
 		int paramVal = 0;
-		System.out.println(battleParams.length / 4);
 		for (int paramCnt = 0; paramCnt < battleParams.length / 4; paramCnt++) {
 			if (paramCnt == 1 || paramCnt == 5) {
 				if (cb[paramCnt / 5].isSelected()) paramVal = 1;
@@ -89,10 +87,12 @@ public class Selector {
 	private static void save() throws IOException {
 		Launcher.container.writeParams();
 	}
-	private static void saveAs(int gameModeIdx) throws IOException {
+	private static void saveAs(int gmIdx, boolean toggleNeo) throws IOException {
 		JFileChooser chooser = new JFileChooser();
+		String windowTitle = "Save ";
+		windowTitle += toggleNeo ? UltBatNeo.MODE_NAMES[gmIdx] : UltBatMeteor.MODE_NAMES[gmIdx];
 		chooser.setCurrentDirectory(Launcher.currDir);
-		chooser.setDialogTitle("Save " + UltBatMeteor.MODE_NAMES[gameModeIdx] + "  parameters...");
+		chooser.setDialogTitle(windowTitle);
 		chooser.setDialogType(JFileChooser.SAVE_DIALOG);
 		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		int result = chooser.showSaveDialog(null);
@@ -153,15 +153,14 @@ public class Selector {
 		pnl.revalidate();
 	}
 	@SuppressWarnings("unchecked")
-	static void start(JFrame startFrame, Dimension minFrameSize, int gameModeIdx, boolean bigEndian, boolean toggleBt2) throws IOException {
-		boolean isSrvOrRnk = gameModeIdx >= UltBatMeteor.SURVIVAL && gameModeIdx <= UltBatMeteor.CHALLENGE;
-		int[] charaIds = new int[UltBatMeteor.NUM_ENEMIES[gameModeIdx]];
+	static void start(JFrame launch, Dimension min, Image logo, Toolkit tk, int gmIdx, boolean bigEndian, boolean bt2) throws IOException {
+		boolean isSrvOrRnk = gmIdx >= UltBatMeteor.SURVIVAL && gmIdx <= UltBatMeteor.CHALLENGE;
+		int[] charaIds = new int[bt2 ? UltBatNeo.NUM_ENEMIES[gmIdx] : UltBatMeteor.NUM_ENEMIES[gmIdx]];
+		int numMissions = bt2 ? UltBatNeo.NUM_MISSIONS[gmIdx] : UltBatMeteor.NUM_MISSIONS[gmIdx];
+		int rows = charaIds.length / 5;
 		battleParams = Launcher.container.getBattleParams();
 		enemyParams = Launcher.container.getEnemyParams();
-		startFrame.setEnabled(false);
-		int x = startFrame.getX() + startFrame.getWidth() + 10;
-		int y = startFrame.getY();
-		int rows = UltBatMeteor.NUM_ENEMIES[gameModeIdx] / 5;
+		launch.setEnabled(false);
 		//Get mission and battle parameter names
 		File[] csvArray = CsvHandler.getAvailableCsvFiles();
 		File[] batPrmCsvs = new File[UltBatMeteor.BATTLE_PARAM_TYPES.length];
@@ -169,7 +168,9 @@ public class Selector {
 			int searchResult = CsvHandler.getCsvSearchResult(csvArray, UltBatMeteor.BATTLE_PARAM_TYPES[paramCnt]);
 			if (searchResult >= 0) batPrmCsvs[paramCnt] = csvArray[searchResult];
 		}
-		int csvIndex = CsvHandler.getCsvSearchResult(csvArray, UltBatMeteor.MODE_TYPES[gameModeIdx]);
+		String modeName = bt2 ? UltBatNeo.MODE_NAMES[gmIdx] : UltBatMeteor.MODE_NAMES[gmIdx];
+		String modeType = bt2 ? UltBatNeo.MODE_TYPES[gmIdx] : UltBatMeteor.MODE_TYPES[gmIdx];
+		int csvIndex = CsvHandler.getCsvSearchResult(csvArray, modeType);
 		String[] names = new String[1];
 		String[][] batPrmNames = new String[batPrmCsvs.length][];
 		for (int csvCnt = 0; csvCnt < batPrmNames.length; csvCnt++) {
@@ -182,19 +183,22 @@ public class Selector {
 		//Set components
 		Box applyBox = Box.createHorizontalBox();
 		Box charaBox = Box.createHorizontalBox(), spinnerBox = Box.createHorizontalBox();
-		ImageIcon saveAsIco = new ImageIcon(SAVE_AS.getScaledInstance(32, 32, Image.SCALE_SMOOTH));
-		ImageIcon saveIco = new ImageIcon(SAVE.getScaledInstance(32, 32, Image.SCALE_SMOOTH));
-		ImageIcon[] charaChips = new ImageIcon[UltBatMeteor.NUM_ENEMIES[gameModeIdx]];
-		SpinnerNumberModel missionModel = new SpinnerNumberModel(1, 1, UltBatMeteor.NUM_MISSIONS[gameModeIdx], 1);
+		Dimension screen = tk.getScreenSize();
+		Image save = tk.getImage(ClassLoader.getSystemResource("img/save.png"));
+		Image saveAs = tk.getImage(ClassLoader.getSystemResource("img/save-as.png"));
+		ImageIcon saveAsIco = new ImageIcon(saveAs.getScaledInstance(32, 32, Image.SCALE_SMOOTH));
+		ImageIcon saveIco = new ImageIcon(save.getScaledInstance(32, 32, Image.SCALE_SMOOTH));
+		ImageIcon[] charaChips = new ImageIcon[charaIds.length];
+		SpinnerNumberModel missionModel = new SpinnerNumberModel(1, 1, numMissions, 1);
 		JButton apply = new JButton("Apply"), saveBtn = new JButton("Save"), saveAsBtn = new JButton("Save As");
 		JComboBox<String> missionDropDown = new JComboBox<String>(names);
 		JComboBox<String>[] batPrmDropDown = new JComboBox[batPrmCsvs.length];
 		JCheckBox[] toggles = new JCheckBox[2];
 		JSpinner missionSelect = new JSpinner(missionModel);
-		JFrame editFrame = new JFrame(Launcher.TITLE + " - " + UltBatMeteor.MODE_NAMES[gameModeIdx] + " Editor");
+		JFrame editFrame = new JFrame(Launcher.TITLE + " - " + modeName + " Editor");
 		JLabel label = new JLabel("Mission No. ");
 		if (csvIndex < 0) label.setText("Opponent No. ");
-		JLabel[] charaLabels = new JLabel[UltBatMeteor.NUM_ENEMIES[gameModeIdx]];
+		JLabel[] charaLabels = new JLabel[charaIds.length];
 		for (int charaCnt = 0; charaCnt < charaLabels.length; charaCnt++) {
 			final int index = charaCnt;
 			charaLabels[charaCnt] = new JLabel();
@@ -205,11 +209,11 @@ public class Selector {
 					try {
 						byte[] charaParams = new byte[44];
 						int missionCnt = (int) missionSelect.getValue() - 1;
-						int pos = (missionCnt * 44 * UltBatMeteor.NUM_ENEMIES[gameModeIdx]) + (index * 44);
+						int pos = (missionCnt * 44 * charaIds.length) + (index * 44);
 						System.arraycopy(enemyParams, pos, charaParams, 0, 44);
-						CharaEditor.start(editFrame, startFrame, charaLabels[index], csvArray, charaParams, pos, bigEndian);
+						CharaEditor.start(editFrame, launch, charaLabels[index], tk, csvArray, charaParams, pos, bigEndian);
 					} catch (IOException e) {
-						Launcher.error(e);
+						Launcher.error(e, tk);
 					}
 				}
 			});
@@ -218,7 +222,7 @@ public class Selector {
 		JMenu fileMenu = new JMenu("File");
 		JMenuItem saveItem = new JMenuItem("Save");
 		JMenuItem saveAsItem = new JMenuItem("Save As...");
-		JPanel charaPanel = new JPanel(new GridLayout(rows, UltBatMeteor.NUM_ENEMIES[gameModeIdx], 1, 1));
+		JPanel charaPanel = new JPanel(new GridLayout(rows, charaIds.length, 1, 1));
 		JPanel charaBoxPanel = new JPanel(), mainPanel = new JPanel(new BorderLayout());
 		JPanel selectorPanel = new JPanel(new BorderLayout());
 		JPanel battlePanel = new JPanel(), missionPanel = new JPanel();
@@ -322,13 +326,11 @@ public class Selector {
 				try {
 					int missionIdx = (int) missionSelect.getValue() - 1;
 					if (csvIndex >= 0) missionDropDown.setSelectedIndex(missionIdx);
-					updateBatPrmUI(batPrmDropDown, toggles, missionPanel, gameModeIdx, missionIdx, bigEndian);
-					updateCharaImgs(charaLabels, charaChips, charaPanel, charaIds, gameModeIdx, missionIdx, toggleBt2, bigEndian);
-					//byte[] currBatPrms = getBattleParamsFromUI(batPrmDropDown, toggles, gameModeIdx, toggleBt2, bigEndian);
-					//Launcher.container.setBattleParams(currBatPrms, missionIdx);
+					updateBatPrmUI(batPrmDropDown, toggles, missionPanel, gmIdx, missionIdx, bigEndian);
+					updateCharaImgs(charaLabels, charaChips, charaPanel, charaIds, gmIdx, missionIdx, bt2, bigEndian);
 				}
 				catch (IOException e) {
-					Launcher.error(e);
+					Launcher.error(e, tk);
 				}
 			}	
 		});
@@ -337,7 +339,7 @@ public class Selector {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
 				int missionIdx = (int) missionSelect.getValue() - 1;
-				byte[] currBatPrms = getBattleParamsFromUI(batPrmDropDown, toggles, gameModeIdx, toggleBt2, bigEndian);
+				byte[] currBatPrms = getBattleParamsFromUI(batPrmDropDown, toggles, gmIdx, bt2, bigEndian);
 				Launcher.container.setBattleParams(currBatPrms, missionIdx);
 			}
 		});
@@ -345,11 +347,11 @@ public class Selector {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
 				try {
-					byte[] currBatPrms = getBattleParamsFromUI(batPrmDropDown, toggles, gameModeIdx, toggleBt2, bigEndian);
+					byte[] currBatPrms = getBattleParamsFromUI(batPrmDropDown, toggles, gmIdx, bt2, bigEndian);
 					Launcher.container.setBattleParams(currBatPrms, (int) missionSelect.getValue() - 1);
-					saveAs(gameModeIdx);
+					saveAs(gmIdx, bt2);
 				} catch (IOException e) {
-					Launcher.error(e);
+					Launcher.error(e, tk);
 				}
 			}
 		});
@@ -357,11 +359,11 @@ public class Selector {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
 				try {
-					byte[] currBatPrms = getBattleParamsFromUI(batPrmDropDown, toggles, gameModeIdx, toggleBt2, bigEndian);
+					byte[] currBatPrms = getBattleParamsFromUI(batPrmDropDown, toggles, gmIdx, bt2, bigEndian);
 					Launcher.container.setBattleParams(currBatPrms, (int) missionSelect.getValue() - 1);
 					save();
 				} catch (IOException e) {
-					Launcher.error(e);
+					Launcher.error(e, tk);
 				}
 			}
 		});
@@ -369,19 +371,26 @@ public class Selector {
 		editFrame.addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosing(WindowEvent we) {
-				startFrame.setEnabled(true);
+				launch.setEnabled(true);
 				editFrame.dispose();
 			}
 		});
 		//Set first-time character chips
-		updateBatPrmUI(batPrmDropDown, toggles, missionPanel, gameModeIdx, 0, bigEndian);
-		updateCharaImgs(charaLabels, charaChips, charaPanel, charaIds, gameModeIdx, 0, toggleBt2, bigEndian);
+		updateBatPrmUI(batPrmDropDown, toggles, missionPanel, gmIdx, 0, bigEndian);
+		updateCharaImgs(charaLabels, charaChips, charaPanel, charaIds, gmIdx, 0, bt2, bigEndian);
 		//Set frame properties
 		editFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-		editFrame.setIconImage(Launcher.LOGO);
+		editFrame.setIconImage(logo);
 		editFrame.setJMenuBar(menuBar);
-		editFrame.setLocation(x, y);
-		editFrame.setMinimumSize(minFrameSize);
+		editFrame.setMinimumSize(min);
 		editFrame.setVisible(true);
+		//Adjust position after rendering frame
+		int height = editFrame.getHeight();
+		int width = editFrame.getWidth();
+		int x = launch.getX() + launch.getWidth() + 10;
+		int y = launch.getY();
+		if (y + height >= screen.height) y = screen.height - ((int) (height * 1.2));
+		if (x + width + 10 >= screen.width) x = screen.width - width - 10;
+		editFrame.setLocation(x, y);
 	}
 }

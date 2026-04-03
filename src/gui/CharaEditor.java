@@ -3,6 +3,7 @@ package gui;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Image;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -57,7 +58,7 @@ public class CharaEditor {
 		}
 	}
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static void start(JFrame selF, JFrame startF, JLabel chip, File[] csvs, byte[] prm, int pos, boolean be) throws IOException {
+	public static void start(JFrame selF, JFrame staF, JLabel chip, Toolkit tk, File[] csvs, byte[] prm, int pos, boolean be) throws IOException {
 		selF.setEnabled(false);
 		byte[] paramBytes = new byte[4];
 		int searchResult = CsvHandler.getCsvSearchResult(csvs, "chara");
@@ -178,7 +179,7 @@ public class CharaEditor {
 					frame.dispose();
 				}
 				catch (IOException e) {
-					Launcher.error(e);
+					Launcher.error(e, null);
 				}
 			}
 		});
@@ -193,10 +194,14 @@ public class CharaEditor {
 		//Set frame properties
 		frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		frame.setSize(minFrameSize);
-		int x = startF.getX() - frame.getWidth() - 10;
-		int y = startF.getY();
-		frame.setLocation(x, y);
 		frame.setTitle("Edit Character");
 		frame.setVisible(true);
+		//Adjust position after rendering frame
+		int height = frame.getHeight(), screenHeight = tk.getScreenSize().height;
+		int x = staF.getX() - frame.getWidth() -10;
+		int y = staF.getY();
+		if (y + height >= screenHeight) y = screenHeight - ((int) (height * 1.2));
+		if (x < 10) x = 10;
+		frame.setLocation(x, y);
 	}
 }
