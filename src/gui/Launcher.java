@@ -29,15 +29,21 @@ import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.UIManager;
-
 import cmd.ParamContainer;
 import cmd.UltBatMeteor;
+import cmd.UltBatNeo;
 /* TODO:
  * 1. Find images to replace the text in the toolbar buttons with. - DONE
  * 2. Add action listeners for remaining buttons (Open, Edit) - DONE.
  * 3. Store the last directory loaded via the file chooser in memory - DONE.
  * 4. Only affects combo boxes, but please reset their horizontal alignment after the file chooser is closed - DONE.
- * 5. Add Wii support (toggle button in toolbar) - DONE. */
+ * 5. Add Wii support (toggle button in toolbar) - DONE.
+ * 6. Prevent NullPointerExceptions from happening. Simple as that, be it with an error message or just nothing.
+ * 7. Work on UI for parameter lists (ParamListEditor).
+ * 8. Rename CharaEditor to CharaEditorMeteor, to make room for CharaEditorNeo (simplified version of the former). */
+/* PROGRESS (April):
+ * (14/04) Instead of disabling the mode dropdown when toggling the BT2 option, it "reconstructs" the dropdown.
+ * (15/04) Refactored code to support singular parameter files (referred to as ParamLists). */
 public class Launcher { 
 	static File currDir = null;
 	static ParamContainer container = null;
@@ -48,20 +54,20 @@ public class Launcher {
 	static final Font HEADING = new Font("Tahoma", Font.BOLD, 16);
 	static final Font SUBHEADING = new Font("Tahoma", Font.PLAIN, 13);
 	
-	private static ParamContainer getParamContainerFromChooser(Toolkit tk, int gameModeIdx, boolean toggleNeo) throws IOException {
+	private static ParamContainer getParamContainerFromChooser(Toolkit tk, int gmIdx, boolean toggleNeo, boolean isListFile) throws IOException {
 		ParamContainer pc = null;
 		JFileChooser chooser = new JFileChooser();
-		chooser.setDialogTitle("Open Folder with " + UltBatMeteor.MODE_NAMES[gameModeIdx] + " parameters...");
+		chooser.setDialogTitle("Open Folder with " + UltBatMeteor.MODE_NAMES[gmIdx] + " parameters...");
 		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		if (currDir != null) chooser.setCurrentDirectory(currDir);
 		int result = chooser.showOpenDialog(null);
 		if (result == JFileChooser.APPROVE_OPTION) {
 			currDir = chooser.getSelectedFile();
-			pc = new ParamContainer(currDir, gameModeIdx, toggleNeo);
+			pc = new ParamContainer(currDir, gmIdx, isListFile, toggleNeo);
 			RandomAccessFile[] containers = pc.getContainers();
 			if (containers[0] == null) {
 				errorBeep(tk);
-				String err = "Chosen folder contains no valid " + UltBatMeteor.MODE_NAMES[gameModeIdx] + " parameters!";
+				String err = "Chosen folder contains no valid " + UltBatMeteor.MODE_NAMES[gmIdx] + " parameters!";
 				JOptionPane.showMessageDialog(null, err, TITLE, JOptionPane.ERROR_MESSAGE);
 			}
 		}
@@ -73,9 +79,12 @@ public class Launcher {
 	}
 	private static void open(JComboBox<String> modeDropDown, JPanel panel, Toolkit tk, boolean toggleNeo) {
 		try {
+			boolean isListFile = ((String) modeDropDown.getSelectedItem()).contains("List");
+			int gameModeIdx = modeDropDown.getSelectedIndex();
+			if (isListFile) gameModeIdx -= UltBatMeteor.NUM_MISSIONS.length;
 			((JLabel) modeDropDown.getRenderer()).setHorizontalAlignment(JLabel.CENTER);
 			panel.repaint();
-			container = getParamContainerFromChooser(tk, modeDropDown.getSelectedIndex(), toggleNeo);
+			container = getParamContainerFromChooser(tk, gameModeIdx, toggleNeo, isListFile);
 			((JLabel) modeDropDown.getRenderer()).setHorizontalAlignment(JLabel.CENTER);
 			panel.repaint();
 		} catch (IOException e) {
@@ -187,9 +196,15 @@ public class Launcher {
 					int state = ie.getStateChange();
 					if (state == ItemEvent.SELECTED) {
 						toggles[index] = !toggles[index]; //What actually causes the toggle to work properly
-						if (index == 0) modeDropDown.setEnabled(!toggles[index]);
-						if (toggles[index]) toggleBtns[index].setIcon(toggleIcos[toggles.length * index + 1]);
-						else toggleBtns[index].setIcon(toggleIcos[toggles.length * index]);
+						modeDropDown.removeAllItems();
+						if (toggles[index]) {
+							toggleBtns[index].setIcon(toggleIcos[toggles.length * index + 1]);
+							for (String i: UltBatNeo.MODE_NAMES) modeDropDown.addItem(i);
+						}
+						else {
+							toggleBtns[index].setIcon(toggleIcos[toggles.length * index]);
+							for (String i: UltBatMeteor.MODE_NAMES) modeDropDown.addItem(i);
+						}
 					}
 				}
 			});
