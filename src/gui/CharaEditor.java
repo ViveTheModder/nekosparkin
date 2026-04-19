@@ -58,7 +58,8 @@ public class CharaEditor {
 		}
 	}
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static void start(JFrame selF, JFrame staF, JLabel chip, Toolkit tk, File[] csvs, byte[] prm, int pos, boolean be) throws IOException {
+	public static void start(JFrame selF, JFrame staF, JLabel chip, Toolkit tk, File[] csvs, byte[] prm, int pos, boolean be, boolean dbg)
+	throws IOException {
 		selF.setEnabled(false);
 		byte[] paramBytes = new byte[4];
 		int searchResult = CsvHandler.getCsvSearchResult(csvs, "chara");
@@ -179,7 +180,7 @@ public class CharaEditor {
 					frame.dispose();
 				}
 				catch (IOException e) {
-					Launcher.error(e, null);
+					Launcher.error(e, tk, be);
 				}
 			}
 		});

@@ -38,12 +38,16 @@ import cmd.UltBatNeo;
  * 3. Store the last directory loaded via the file chooser in memory - DONE.
  * 4. Only affects combo boxes, but please reset their horizontal alignment after the file chooser is closed - DONE.
  * 5. Add Wii support (toggle button in toolbar) - DONE.
- * 6. Prevent NullPointerExceptions from happening. Simple as that, be it with an error message or just nothing.
- * 7. Work on UI for parameter lists (ParamListEditor).
+ * 6. Prevent NullPointerExceptions from happening. Simple as that, be it with an error message or just nothing - DONE.
+ * 7. Work on UI for parameter lists (ParamListEditor) - WIP.
  * 8. Rename CharaEditor to CharaEditorMeteor, to make room for CharaEditorNeo (simplified version of the former). */
 /* PROGRESS (April):
  * (14/04) Instead of disabling the mode dropdown when toggling the BT2 option, it "reconstructs" the dropdown.
- * (15/04) Refactored code to support singular parameter files (referred to as ParamLists). */
+ * (15/04) Refactored code to support singular parameter files (referred to as ParamLists).
+ * (17/04) Improved error/exception handling.
+ * (18/04) Slightly improved error/exception handling, added directory validation and fixed chooser/error window titles.
+ * (19/04) Added barebones UI for ParamListEditor, fixed out of bounds index exception from Random BGM/Referee (ID: 998).
+ * 		   Also added a feature in which the param containers change based on the current directory and selected gamemode (to save time). */
 public class Launcher { 
 	static File currDir = null;
 	static ParamContainer container = null;
@@ -54,21 +58,26 @@ public class Launcher {
 	static final Font HEADING = new Font("Tahoma", Font.BOLD, 16);
 	static final Font SUBHEADING = new Font("Tahoma", Font.PLAIN, 13);
 	
-	private static ParamContainer getParamContainerFromChooser(Toolkit tk, int gmIdx, boolean toggleNeo, boolean isListFile) throws IOException {
+	private static ParamContainer getParamContainerFromChooser(JComboBox<String> dd, Toolkit tk, int gmIdx, boolean neo, boolean lf)
+	throws IOException {
 		ParamContainer pc = null;
 		JFileChooser chooser = new JFileChooser();
-		chooser.setDialogTitle("Open Folder with " + UltBatMeteor.MODE_NAMES[gmIdx] + " parameters...");
+		chooser.setDialogTitle("Open Folder with " + dd.getSelectedItem() + " parameters...");
 		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		if (currDir != null) chooser.setCurrentDirectory(currDir);
 		int result = chooser.showOpenDialog(null);
 		if (result == JFileChooser.APPROVE_OPTION) {
-			currDir = chooser.getSelectedFile();
-			pc = new ParamContainer(currDir, gmIdx, isListFile, toggleNeo);
+			File tmp = chooser.getSelectedFile();
+			if (tmp.isDirectory()) currDir = tmp;
+			else {
+				error("Chosen directory does not point to a folder!", tk);
+				return pc;
+			}
+			pc = new ParamContainer(currDir, gmIdx, lf, neo);
 			RandomAccessFile[] containers = pc.getContainers();
 			if (containers[0] == null) {
-				errorBeep(tk);
-				String err = "Chosen folder contains no valid " + UltBatMeteor.MODE_NAMES[gmIdx] + " parameters!";
-				JOptionPane.showMessageDialog(null, err, TITLE, JOptionPane.ERROR_MESSAGE);
+				String msg = "Chosen folder contains no valid " + dd.getSelectedItem() + " parameters!";
+				error(msg, tk);
 			}
 		}
 		return pc;
@@ -77,23 +86,23 @@ public class Launcher {
 		Runnable runWinErrorSnd = (Runnable) tk.getDesktopProperty("win.sound.exclamation");
 		if (runWinErrorSnd!=null) runWinErrorSnd.run();
 	}
-	private static void open(JComboBox<String> modeDropDown, JPanel panel, Toolkit tk, boolean toggleNeo) {
+	private static void open(JComboBox<String> modeDropDown, JPanel panel, Toolkit tk, boolean neo, boolean isListFile, boolean debug) {
 		try {
-			boolean isListFile = ((String) modeDropDown.getSelectedItem()).contains("List");
 			int gameModeIdx = modeDropDown.getSelectedIndex();
 			if (isListFile) gameModeIdx -= UltBatMeteor.NUM_MISSIONS.length;
 			((JLabel) modeDropDown.getRenderer()).setHorizontalAlignment(JLabel.CENTER);
 			panel.repaint();
-			container = getParamContainerFromChooser(tk, gameModeIdx, toggleNeo, isListFile);
+			container = getParamContainerFromChooser(modeDropDown, tk, gameModeIdx, neo, isListFile);
 			((JLabel) modeDropDown.getRenderer()).setHorizontalAlignment(JLabel.CENTER);
 			panel.repaint();
-		} catch (IOException e) {
-			error(e, tk);
+		} catch (Exception e) {
+			((JLabel) modeDropDown.getRenderer()).setHorizontalAlignment(JLabel.CENTER);
+			error(e, tk, debug);
 		}
 	}
-	private static void start(Toolkit tk) {
+	private static void start(Toolkit tk, boolean debug) {
 		//Tired of using static variables, sorry...
-		final boolean[] toggles = new boolean[2];
+		final boolean[] toggles = new boolean[2], isListFile = new boolean[1];
 		Image logo = tk.getImage(ClassLoader.getSystemResource("img/logo.png"));
 		Image open = tk.getImage(ClassLoader.getSystemResource("img/open.png"));
 		ImageIcon logoIco = new ImageIcon(logo.getScaledInstance(64, 64, Image.SCALE_SMOOTH));
@@ -176,15 +185,24 @@ public class Launcher {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
 				try {
-					RandomAccessFile[] datFiles = container.getContainers(); 
-					if (datFiles != null) {
-						if (datFiles[0] != null)
-							Selector.start(frame, minFrameSize, logo, tk, modeDropDown.getSelectedIndex(), toggles[1], toggles[0]);
+					String modeName = (String) modeDropDown.getSelectedItem();
+					if (container == null)
+						error("Please choose a folder containing " + modeName + " files!", tk);
+					else {
+						RandomAccessFile[] datFiles = container.getContainers();
+						if (datFiles != null) {
+							if (datFiles[0] != null) {
+								int idx = modeDropDown.getSelectedIndex();
+								if (!isListFile[0])
+									Selector.start(frame, minFrameSize, logo, tk, idx, toggles[1], toggles[0], debug);
+								else
+									ParamListEditor.start(frame, modeName, minFrameSize, logo, tk, idx, toggles[1], debug);
+							}
+						}
 					}
 				}
-				catch (IOException e) {
-					errorBeep(tk);
-					JOptionPane.showMessageDialog(null, e.getClass().getSimpleName() + ": " + e.getMessage(), TITLE, 0);
+				catch (Exception e) {
+					error(e, tk, debug);
 				}
 			}
 		});
@@ -209,16 +227,32 @@ public class Launcher {
 				}
 			});
 		}
+		modeDropDown.addItemListener(new ItemListener() {
+			@Override
+			public void itemStateChanged(ItemEvent ae) {	
+					try {
+						int gameModeIdx = modeDropDown.getSelectedIndex();
+						isListFile[0] = ((String) modeDropDown.getSelectedItem()).contains("List");
+						if (isListFile[0]) gameModeIdx -= UltBatMeteor.NUM_MISSIONS.length;
+						if (currDir != null)
+							container = new ParamContainer(currDir, gameModeIdx, isListFile[0], toggles[0]);
+					} catch (IOException e) {
+						error(e, tk, debug);
+					}
+			}
+		});
 		openBtn.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
-				open(modeDropDown, modePanel, tk, toggles[0]);
+				isListFile[0] = ((String) modeDropDown.getSelectedItem()).contains("List");
+				open(modeDropDown, modePanel, tk, toggles[0], isListFile[0], debug);
 			}
 		});
 		openItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
-				open(modeDropDown, modePanel, tk, toggles[0]);
+				isListFile[0] = ((String) modeDropDown.getSelectedItem()).contains("List");
+				open(modeDropDown, modePanel, tk, toggles[0], isListFile[0], debug);
 			}
 		});
 		//Set frame properties
@@ -230,19 +264,35 @@ public class Launcher {
 		frame.setVisible(true);
 	}
 	
-	public static void error(Exception e, Toolkit tk) {
+	public static void error(String msg, Toolkit tk) {
 		errorBeep(tk);
-		String err = e.getClass().getSimpleName() + ": " + e.getMessage();
+		JOptionPane.showMessageDialog(null, msg, TITLE + " - Error", JOptionPane.ERROR_MESSAGE);
+	}
+	public static void error(Exception e, Toolkit tk, boolean debug) {
+		errorBeep(tk);
+		String err = e.getClass().getSimpleName() + ": " + e.getMessage() + "\n";
+		if (debug) {
+			StackTraceElement[] ste = e.getStackTrace();
+			for (StackTraceElement el: ste) {
+				//Add new lines and remove brackets
+				String line = el.toString().replace("[", "").replace("]", "");
+				if (line.startsWith("gui") || line.startsWith("cmd")) err += line + "\n";
+			}
+		}
 		JOptionPane.showMessageDialog(null, err, TITLE + " - Exception", JOptionPane.ERROR_MESSAGE);
 	}
 	public static void main(String[] args) {
+		boolean debug = false;
+		if (args.length > 0) {
+			if (args[0].equals("-d")) debug = true;
+		}
 		Toolkit tk = Toolkit.getDefaultToolkit();
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-			start(tk);
+			start(tk, debug);
 		}
 		catch (Exception e) {
-			error(e, tk);
+			error(e, tk, debug);
 		}
 	}
 }

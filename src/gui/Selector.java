@@ -111,7 +111,10 @@ public class Selector {
 				else cb[paramCnt / 5].setSelected(false);
 			}
 			else {
-				if (dd[paramCnt] != null) dd[paramCnt].setSelectedIndex(param);
+				if (dd[paramCnt] != null) {
+					if (param == 998) dd[paramCnt].setSelectedIndex(dd[paramCnt].getItemCount() - 1);
+					else dd[paramCnt].setSelectedIndex(param);
+				}
 			}
 		}
 		mp.revalidate();
@@ -153,7 +156,7 @@ public class Selector {
 		pnl.revalidate();
 	}
 	@SuppressWarnings("unchecked")
-	static void start(JFrame launch, Dimension min, Image logo, Toolkit tk, int gmIdx, boolean bigEndian, boolean bt2) throws IOException {
+	static void start(JFrame launch, Dimension min, Image logo, Toolkit tk, int gmIdx, boolean be, boolean bt2, boolean dbg) throws IOException {
 		boolean isSrvOrRnk = gmIdx >= UltBatMeteor.SURVIVAL && gmIdx <= UltBatMeteor.CHALLENGE;
 		int[] charaIds = new int[bt2 ? UltBatNeo.NUM_ENEMIES[gmIdx] : UltBatMeteor.NUM_ENEMIES[gmIdx]];
 		int numMissions = bt2 ? UltBatNeo.NUM_MISSIONS[gmIdx] : UltBatMeteor.NUM_MISSIONS[gmIdx];
@@ -211,9 +214,9 @@ public class Selector {
 						int missionCnt = (int) missionSelect.getValue() - 1;
 						int pos = (missionCnt * 44 * charaIds.length) + (index * 44);
 						System.arraycopy(enemyParams, pos, charaParams, 0, 44);
-						CharaEditor.start(editFrame, launch, charaLabels[index], tk, csvArray, charaParams, pos, bigEndian);
+						CharaEditor.start(editFrame, launch, charaLabels[index], tk, csvArray, charaParams, pos, be, dbg);
 					} catch (IOException e) {
-						Launcher.error(e, tk);
+						Launcher.error(e, tk, dbg);
 					}
 				}
 			});
@@ -326,11 +329,11 @@ public class Selector {
 				try {
 					int missionIdx = (int) missionSelect.getValue() - 1;
 					if (csvIndex >= 0) missionDropDown.setSelectedIndex(missionIdx);
-					updateBatPrmUI(batPrmDropDown, toggles, missionPanel, gmIdx, missionIdx, bigEndian);
-					updateCharaImgs(charaLabels, charaChips, charaPanel, charaIds, gmIdx, missionIdx, bt2, bigEndian);
+					updateBatPrmUI(batPrmDropDown, toggles, missionPanel, gmIdx, missionIdx, be);
+					updateCharaImgs(charaLabels, charaChips, charaPanel, charaIds, gmIdx, missionIdx, bt2, be);
 				}
 				catch (IOException e) {
-					Launcher.error(e, tk);
+					Launcher.error(e, tk, dbg);
 				}
 			}	
 		});
@@ -339,7 +342,7 @@ public class Selector {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
 				int missionIdx = (int) missionSelect.getValue() - 1;
-				byte[] currBatPrms = getBattleParamsFromUI(batPrmDropDown, toggles, gmIdx, bt2, bigEndian);
+				byte[] currBatPrms = getBattleParamsFromUI(batPrmDropDown, toggles, gmIdx, bt2, be);
 				Launcher.container.setBattleParams(currBatPrms, missionIdx);
 			}
 		});
@@ -347,11 +350,11 @@ public class Selector {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
 				try {
-					byte[] currBatPrms = getBattleParamsFromUI(batPrmDropDown, toggles, gmIdx, bt2, bigEndian);
+					byte[] currBatPrms = getBattleParamsFromUI(batPrmDropDown, toggles, gmIdx, bt2, be);
 					Launcher.container.setBattleParams(currBatPrms, (int) missionSelect.getValue() - 1);
 					saveAs(gmIdx, bt2);
 				} catch (IOException e) {
-					Launcher.error(e, tk);
+					Launcher.error(e, tk, dbg);
 				}
 			}
 		});
@@ -359,11 +362,11 @@ public class Selector {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
 				try {
-					byte[] currBatPrms = getBattleParamsFromUI(batPrmDropDown, toggles, gmIdx, bt2, bigEndian);
+					byte[] currBatPrms = getBattleParamsFromUI(batPrmDropDown, toggles, gmIdx, bt2, be);
 					Launcher.container.setBattleParams(currBatPrms, (int) missionSelect.getValue() - 1);
 					save();
 				} catch (IOException e) {
-					Launcher.error(e, tk);
+					Launcher.error(e, tk, dbg);
 				}
 			}
 		});
@@ -376,8 +379,8 @@ public class Selector {
 			}
 		});
 		//Set first-time character chips
-		updateBatPrmUI(batPrmDropDown, toggles, missionPanel, gmIdx, 0, bigEndian);
-		updateCharaImgs(charaLabels, charaChips, charaPanel, charaIds, gmIdx, 0, bt2, bigEndian);
+		updateBatPrmUI(batPrmDropDown, toggles, missionPanel, gmIdx, 0, be);
+		updateCharaImgs(charaLabels, charaChips, charaPanel, charaIds, gmIdx, 0, bt2, be);
 		//Set frame properties
 		editFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		editFrame.setIconImage(logo);

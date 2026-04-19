@@ -8,14 +8,15 @@ import java.util.Scanner;
 
 public class CsvHandler {
 	private static int getNumRows(File csv) throws IOException {
-		byte[] charBytes = new byte[2];
+		byte charByte; //The method was rewritten to search for 1 byte instead of 2
 		int rowCnt = 0, fileSize = (int) csv.length();
 		RandomAccessFile raf = new RandomAccessFile(csv, "r");
 		raf.seek(0);
 		for (int pos = 0; pos < fileSize; pos++) {
 			raf.seek(pos);
-			raf.read(charBytes);
-			if (charBytes[0] == 0x0D && charBytes[1] == 0x0A) rowCnt++;
+			charByte = raf.readByte();
+			//Check for Line Feed (originally, Carriage Return was also included, but only Windows uses it)
+			if (charByte == 0x0A) rowCnt++;
 		}
 		raf.close();
 		return rowCnt + 1;

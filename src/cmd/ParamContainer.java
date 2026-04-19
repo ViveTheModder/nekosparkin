@@ -82,7 +82,7 @@ public class ParamContainer {
 			datSizes[1] = toggleNeo ? UltBatNeo.DAT_SIZES[2 * gameModeIdx + 1] : UltBatMeteor.DAT_SIZES[2 * gameModeIdx + 1];
 		for (int datCnt = 0; datCnt < datSizes.length; datCnt++) {
 			byte[] params = new byte[datSizes[datCnt]];
-			containers[datCnt].read(params);
+			if (containers[datCnt] != null) containers[datCnt].read(params);
 			if (datCnt % 2 != 0) enemyParams = params;
 			else battleParams = params;
 		}
