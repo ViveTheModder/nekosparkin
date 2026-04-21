@@ -39,7 +39,7 @@ import cmd.UltBatNeo;
  * 4. Only affects combo boxes, but please reset their horizontal alignment after the file chooser is closed - DONE.
  * 5. Add Wii support (toggle button in toolbar) - DONE.
  * 6. Prevent NullPointerExceptions from happening. Simple as that, be it with an error message or just nothing - DONE.
- * 7. Work on UI for parameter lists (ParamListEditor) - WIP.
+ * 7. Work on UI for parameter lists (ParamListEditor) - DONE.
  * 8. Rename CharaEditor to CharaEditorMeteor, to make room for CharaEditorNeo (simplified version of the former). */
 /* PROGRESS (April):
  * (14/04) Instead of disabling the mode dropdown when toggling the BT2 option, it "reconstructs" the dropdown.
@@ -47,7 +47,9 @@ import cmd.UltBatNeo;
  * (17/04) Improved error/exception handling.
  * (18/04) Slightly improved error/exception handling, added directory validation and fixed chooser/error window titles.
  * (19/04) Added barebones UI for ParamListEditor, fixed out of bounds index exception from Random BGM/Referee (ID: 998).
- * 		   Also added a feature in which the param containers change based on the current directory and selected gamemode (to save time). */
+ * 		   Also added a feature in which the param containers change based on the current directory and selected gamemode (to save time).
+ * (20/04) Nearly finished ParamListEditor UI.
+ * (21/04) Finished ParamListEditor UI and functionality. */
 public class Launcher { 
 	static File currDir = null;
 	static ParamContainer container = null;
@@ -196,7 +198,7 @@ public class Launcher {
 								if (!isListFile[0])
 									Selector.start(frame, minFrameSize, logo, tk, idx, toggles[1], toggles[0], debug);
 								else
-									ParamListEditor.start(frame, modeName, minFrameSize, logo, tk, idx, toggles[1], debug);
+									ParamListEditor.start(frame, modeName, minFrameSize, logo, tk, idx, toggles[1], toggles[0], debug);
 							}
 						}
 					}

@@ -255,6 +255,8 @@ public class Selector {
 		saveAsItem.setIcon(saveAsIco);
 		saveItem.setIcon(saveIco);
 		saveBtn.setIcon(saveIco);
+		toolBar.addSeparator();
+		toolBar.setFloatable(false);
 		//Add components
 		applyBox.add(Box.createHorizontalGlue());
 		applyBox.add(apply);

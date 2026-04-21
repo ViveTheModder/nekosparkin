@@ -43,10 +43,11 @@ public class ParamContainer {
 	public RandomAccessFile[] getContainers() {
 		return containers;
 	}
+	public void setBattleParams(byte[] params) {
+		System.arraycopy(params, 0, battleParams, 0, params.length);
+	}
 	public void setBattleParams(byte[] params, int missionIdx) {
-		int size = 0;
-		if (!isListFile) size = toggleNeo ? UltBatNeo.BATTLE_PARAMS_SIZE : UltBatMeteor.BATTLE_PARAMS_SIZE[gameModeIdx];
-		else size = UltBatMeteor.LIST_SIZES[gameModeIdx];
+		int size = toggleNeo ? UltBatNeo.BATTLE_PARAMS_SIZE : UltBatMeteor.BATTLE_PARAMS_SIZE[gameModeIdx];
 		System.arraycopy(params, 0, battleParams, missionIdx * size, params.length);
 	}
 	public void setEnemyParams(byte[] params, int missionIdx) {
@@ -75,9 +76,22 @@ public class ParamContainer {
 			newContainers[fileCnt].close();
 		}
 	}
+	public void writeParams(File newDir, String modeName) throws IOException {
+		File[] newDatFiles = new File[containers.length];
+		RandomAccessFile[] newContainers = new RandomAccessFile[containers.length];
+		modeName = modeName.toLowerCase().replace(" ", "_").replace("(", "").replace(")", "");
+		for (int fileCnt = 0; fileCnt < newDatFiles.length; fileCnt++) {
+			newDatFiles[fileCnt] = newDir.toPath().resolve(modeName + "_params.dat").toFile();
+			newContainers[fileCnt] = new RandomAccessFile(newDatFiles[fileCnt], "rw");
+			if (fileCnt % 2 == 0) newContainers[fileCnt].write(battleParams);
+			else newContainers[fileCnt].write(enemyParams);
+			newContainers[fileCnt].close();
+		}
+	}
 	private void initMissionParams() throws IOException {
 		int[] datSizes = new int[containers.length];
-		datSizes[0] = toggleNeo ? UltBatNeo.DAT_SIZES[2 * gameModeIdx] : UltBatMeteor.DAT_SIZES[2 * gameModeIdx];
+		if (!isListFile) datSizes[0] = toggleNeo ? UltBatNeo.DAT_SIZES[2 * gameModeIdx] : UltBatMeteor.DAT_SIZES[2 * gameModeIdx];
+		else datSizes[0] = (int) containers[0].length();
 		if (datSizes.length == 2) 
 			datSizes[1] = toggleNeo ? UltBatNeo.DAT_SIZES[2 * gameModeIdx + 1] : UltBatMeteor.DAT_SIZES[2 * gameModeIdx + 1];
 		for (int datCnt = 0; datCnt < datSizes.length; datCnt++) {
