@@ -10,6 +10,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -28,6 +29,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
+import javax.swing.KeyStroke;
 import javax.swing.UIManager;
 import cmd.ParamContainer;
 import cmd.UltBatMeteor;
@@ -40,7 +42,8 @@ import cmd.UltBatNeo;
  * 5. Add Wii support (toggle button in toolbar) - DONE.
  * 6. Prevent NullPointerExceptions from happening. Simple as that, be it with an error message or just nothing - DONE.
  * 7. Work on UI for parameter lists (ParamListEditor) - DONE.
- * 8. Rename CharaEditor to CharaEditorMeteor, to make room for CharaEditorNeo (simplified version of the former). */
+ * 8. Rename CharaEditor to CharaEditorMeteor, to make room for CharaEditorNeo (simplified version of the former).
+ * 9. Add keyboard shortcuts (CTRL+O, CTRL+S, CTRL+SHIFT+S... maybe CTRL+W?) - DONE. */
 /* PROGRESS (April):
  * (14/04) Instead of disabling the mode dropdown when toggling the BT2 option, it "reconstructs" the dropdown.
  * (15/04) Refactored code to support singular parameter files (referred to as ParamLists).
@@ -49,7 +52,7 @@ import cmd.UltBatNeo;
  * (19/04) Added barebones UI for ParamListEditor, fixed out of bounds index exception from Random BGM/Referee (ID: 998).
  * 		   Also added a feature in which the param containers change based on the current directory and selected gamemode (to save time).
  * (20/04) Nearly finished ParamListEditor UI.
- * (21/04) Finished ParamListEditor UI and functionality. */
+ * (21/04) Finished ParamListEditor UI and functionality. Also added keyboard shortcuts for saving files. */
 public class Launcher { 
 	static File currDir = null;
 	static ParamContainer container = null;
@@ -134,6 +137,7 @@ public class Launcher {
 		JPanel mainPanel = new JPanel(new BorderLayout());
 		JPanel modePanel = new JPanel();
 		JToolBar toolBar = new JToolBar();
+		KeyStroke openShortcut = KeyStroke.getKeyStroke('O', KeyEvent.CTRL_DOWN_MASK);
 		//Set components
 		editBtn.setAlignmentX(JButton.CENTER_ALIGNMENT);
 		editBtn.setBackground(FG_COLOR);
@@ -150,6 +154,7 @@ public class Launcher {
 		modePanel.setBackground(BG_COLOR);
 		modePanel.setLayout(new BoxLayout(modePanel, BoxLayout.Y_AXIS));
 		openBtn.setIcon(openIco);
+		openItem.setAccelerator(openShortcut);
 		openItem.setIcon(openIco);
 		toolBar.addSeparator();
 		toolBar.setFloatable(false);

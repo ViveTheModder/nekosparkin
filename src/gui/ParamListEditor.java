@@ -9,6 +9,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -29,6 +30,8 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JToolBar;
+import javax.swing.KeyStroke;
+
 import cmd.CsvHandler;
 import cmd.ParamHandler;
 
@@ -105,12 +108,16 @@ public class ParamListEditor {
 		JPanel mainPanel = new JPanel(new BorderLayout()), paramPanel = new JPanel();
 		JScrollPane scroll = new JScrollPane(paramPanel);
 		JToolBar toolBar = new JToolBar();
+		KeyStroke saveShortcut = KeyStroke.getKeyStroke('S', KeyEvent.CTRL_DOWN_MASK);
+		KeyStroke saveAsShortcut = KeyStroke.getKeyStroke('S', KeyEvent.CTRL_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK);
 		//Set component properties
 		launch.setEnabled(false);
 		paramPanel.setBackground(Launcher.BG_COLOR);
 		paramPanel.setLayout(new BoxLayout(paramPanel, BoxLayout.Y_AXIS));
 		saveAsBtn.setIcon(saveAsIco);
+		saveAsItem.setAccelerator(saveAsShortcut);
 		saveAsItem.setIcon(saveAsIco);
+		saveItem.setAccelerator(saveShortcut);
 		saveItem.setIcon(saveIco);
 		saveBtn.setIcon(saveIco);
 		toolBar.addSeparator();
@@ -132,7 +139,8 @@ public class ParamListEditor {
 			paramCboxArr[paramCnt] = new JComboBox<String>(paramNames);
 			paramCboxArr[paramCnt].setAlignmentX(JComboBox.CENTER_ALIGNMENT);
 			((JLabel) paramCboxArr[paramCnt].getRenderer()).setHorizontalAlignment(JLabel.CENTER);
-			paramCboxArr[paramCnt].setSelectedIndex(paramArr[paramCnt]);
+			if (paramArr[paramCnt] != 998) paramCboxArr[paramCnt].setSelectedIndex(paramArr[paramCnt]);
+			else paramCboxArr[paramCnt].setSelectedIndex(paramCboxArr[paramCnt].getItemCount() - 1);
 			paramBoxArr[paramCnt].add(Box.createHorizontalGlue());
 			//Only add images for maps, not background music
 			JLabel paramCntLbl = new JLabel((paramCnt + 1) + ": ");
@@ -143,7 +151,7 @@ public class ParamListEditor {
 				paramImgLbls[paramCnt] = new JLabel(" ");
 				paramImgLbls[paramCnt].setAlignmentX(JLabel.CENTER_ALIGNMENT);
 				paramImgLbls[paramCnt].setHorizontalAlignment(JLabel.CENTER);
-				updateParamImage(paramCnt, paramImgLbls[paramCnt], folderName);
+				updateParamImage(paramArr[paramCnt], paramImgLbls[paramCnt], folderName);
 				nestedBox.add(paramImgLbls[paramCnt]);
 			}
 			nestedBox.add(paramCboxArr[paramCnt]);

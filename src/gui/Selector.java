@@ -9,6 +9,7 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
@@ -33,6 +34,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JToolBar;
+import javax.swing.KeyStroke;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -232,6 +234,8 @@ public class Selector {
 		JScrollPane battleScroll = new JScrollPane(battlePanel);
 		JScrollPane charaScroll = new JScrollPane(charaBoxPanel);
 		JToolBar toolBar = new JToolBar();
+		KeyStroke saveShortcut = KeyStroke.getKeyStroke('S', KeyEvent.CTRL_DOWN_MASK);
+		KeyStroke saveAsShortcut = KeyStroke.getKeyStroke('S', KeyEvent.CTRL_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK);
 		//Set component properties
 		apply.setAlignmentX(JButton.CENTER_ALIGNMENT);
 		apply.setBackground(Launcher.TX_COLOR);
@@ -252,7 +256,9 @@ public class Selector {
 		charaBoxPanel.setLayout(new BoxLayout(charaBoxPanel, BoxLayout.Y_AXIS));
 		battlePanel.setLayout(new BoxLayout(battlePanel, BoxLayout.Y_AXIS));
 		saveAsBtn.setIcon(saveAsIco);
+		saveAsItem.setAccelerator(saveAsShortcut);
 		saveAsItem.setIcon(saveAsIco);
+		saveItem.setAccelerator(saveShortcut);
 		saveItem.setIcon(saveIco);
 		saveBtn.setIcon(saveIco);
 		toolBar.addSeparator();
@@ -360,7 +366,31 @@ public class Selector {
 				}
 			}
 		});
+		saveAsItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent ae) {
+				try {
+					byte[] currBatPrms = getBattleParamsFromUI(batPrmDropDown, toggles, gmIdx, bt2, be);
+					Launcher.container.setBattleParams(currBatPrms, (int) missionSelect.getValue() - 1);
+					saveAs(gmIdx, bt2);
+				} catch (IOException e) {
+					Launcher.error(e, tk, dbg);
+				}
+			}
+		});
 		saveBtn.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent ae) {
+				try {
+					byte[] currBatPrms = getBattleParamsFromUI(batPrmDropDown, toggles, gmIdx, bt2, be);
+					Launcher.container.setBattleParams(currBatPrms, (int) missionSelect.getValue() - 1);
+					save();
+				} catch (IOException e) {
+					Launcher.error(e, tk, dbg);
+				}
+			}
+		});
+		saveItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
 				try {

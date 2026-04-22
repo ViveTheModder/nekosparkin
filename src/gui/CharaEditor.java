@@ -44,16 +44,16 @@ public class CharaEditor {
 		}
 		return ints;
 	}
-	private static void setComboBoxAndSpinVals(JComboBox<String> charaCb, JComboBox<String>[] itemCbs, JSpinner[] spins, int[] ints) {
+	private static void setComboBoxAndSpinVals(JComboBox<String> charaCb, JComboBox<String>[] itemCbs, JSpinner[] spins, int[] paramArr) {
 		int numChars = charaCb.getItemCount();
-		if (ints[0] == 999) charaCb.setSelectedIndex(numChars - 1);
-		else if (ints[0] == 998) charaCb.setSelectedIndex(numChars - 2);
-		else charaCb.setSelectedIndex(ints[0]);
-		spins[0].setValue(ints[1] + 1);
-		spins[1].setValue(ints[2]);
+		if (paramArr[0] == 999) charaCb.setSelectedIndex(numChars - 1);
+		else if (paramArr[0] == 998) charaCb.setSelectedIndex(numChars - 2);
+		else charaCb.setSelectedIndex(paramArr[0]);
+		spins[0].setValue(paramArr[1] + 1);
+		spins[1].setValue(paramArr[2]);
 		for (int itemCnt = 0; itemCnt < itemCbs.length; itemCnt++) {
-			int itemId = ints[itemCnt + 3];
-			if (itemId != 999) itemCbs[itemCnt].setSelectedIndex(ints[itemCnt + 3]);
+			int itemId = paramArr[itemCnt + 3];
+			if (itemId != 999) itemCbs[itemCnt].setSelectedIndex(paramArr[itemCnt + 3]);
 			else itemCbs[itemCnt].setSelectedIndex(itemCbs[itemCnt].getItemCount() - 1);
 		}
 	}
