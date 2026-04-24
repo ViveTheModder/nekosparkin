@@ -34,25 +34,7 @@ import javax.swing.UIManager;
 import cmd.ParamContainer;
 import cmd.UltBatMeteor;
 import cmd.UltBatNeo;
-/* TODO:
- * 1. Find images to replace the text in the toolbar buttons with. - DONE
- * 2. Add action listeners for remaining buttons (Open, Edit) - DONE.
- * 3. Store the last directory loaded via the file chooser in memory - DONE.
- * 4. Only affects combo boxes, but please reset their horizontal alignment after the file chooser is closed - DONE.
- * 5. Add Wii support (toggle button in toolbar) - DONE.
- * 6. Prevent NullPointerExceptions from happening. Simple as that, be it with an error message or just nothing - DONE.
- * 7. Work on UI for parameter lists (ParamListEditor) - DONE.
- * 8. Rename CharaEditor to CharaEditorMeteor, to make room for CharaEditorNeo (simplified version of the former).
- * 9. Add keyboard shortcuts (CTRL+O, CTRL+S, CTRL+SHIFT+S... maybe CTRL+W?) - DONE. */
-/* PROGRESS (April):
- * (14/04) Instead of disabling the mode dropdown when toggling the BT2 option, it "reconstructs" the dropdown.
- * (15/04) Refactored code to support singular parameter files (referred to as ParamLists).
- * (17/04) Improved error/exception handling.
- * (18/04) Slightly improved error/exception handling, added directory validation and fixed chooser/error window titles.
- * (19/04) Added barebones UI for ParamListEditor, fixed out of bounds index exception from Random BGM/Referee (ID: 998).
- * 		   Also added a feature in which the param containers change based on the current directory and selected gamemode (to save time).
- * (20/04) Nearly finished ParamListEditor UI.
- * (21/04) Finished ParamListEditor UI and functionality. Also added keyboard shortcuts for saving files. */
+
 public class Launcher { 
 	static File currDir = null;
 	static ParamContainer container = null;
@@ -239,11 +221,16 @@ public class Launcher {
 			public void itemStateChanged(ItemEvent ae) {	
 					try {
 						int gameModeIdx = modeDropDown.getSelectedIndex();
-						isListFile[0] = ((String) modeDropDown.getSelectedItem()).contains("List");
+						/* When switching from BT3 to BT2, the number of gamemodes changes,
+						 * which could cause index out of range exceptions. To fix this,
+						 * select the first game mode by default. */
+						if (gameModeIdx == -1) gameModeIdx = 0;
+						String gameModeName = ((String) modeDropDown.getSelectedItem());
+						if (gameModeName != null) isListFile[0] = gameModeName.contains("List");
 						if (isListFile[0]) gameModeIdx -= UltBatMeteor.NUM_MISSIONS.length;
 						if (currDir != null)
 							container = new ParamContainer(currDir, gameModeIdx, isListFile[0], toggles[0]);
-					} catch (IOException e) {
+					} catch (Exception e) {
 						error(e, tk, debug);
 					}
 			}

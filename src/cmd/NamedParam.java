@@ -5,18 +5,20 @@ import java.io.IOException;
 
 public class NamedParam {
 	
+	private boolean toggleNeo;
 	private int id;
 	private String name;
 	private String type;
 	
-	public NamedParam(int id, String type, File[] csvFiles, String[] names) throws IOException {
+	public NamedParam(int id, String type, File[] csvFiles, String[] names, boolean neo) throws IOException {
 		this.id = id;
 		this.type = type;
-		this.name = getParamNameFromType(id, type, csvFiles, names);
+		name = getParamNameFromType(id, type, csvFiles, names);
+		toggleNeo = neo;
 	}
 	private String getParamNameFromType(int id, String type, File[] csvFiles, String[] names) throws IOException {
 		String name = null;
-		File csv = csvFiles[CsvHandler.getCsvSearchResult(csvFiles, type)];
+		File csv = csvFiles[CsvHandler.getCsvSearchResult(csvFiles, type, toggleNeo)];
 		if (csv == null) return name;
 		if (names != null) {
 			if (id < names.length) name = names[id];

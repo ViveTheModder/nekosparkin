@@ -1,6 +1,6 @@
 package gui;
-import java.awt.BorderLayout;
 //Nekosparkin: Parameter List Editor class by ViveTheJoestar
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Image;
@@ -31,7 +31,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JToolBar;
 import javax.swing.KeyStroke;
-
 import cmd.CsvHandler;
 import cmd.ParamHandler;
 
@@ -83,11 +82,13 @@ public class ParamListEditor {
 	@SuppressWarnings("unchecked")
 	public static void start(JFrame launch, String name, Dimension min, Image logo, Toolkit tk, int gmIdx, boolean be, boolean bt2, boolean dbg)
 	throws IOException {
-		File[] csvArray = CsvHandler.getAvailableCsvFiles();
+		File[] csvArray = CsvHandler.getAvailableCsvFiles(bt2);
 		String[] modeNameArr = name.split(" ");
 		String csvName = modeNameArr[modeNameArr.length - 2].replace("(", "").toLowerCase();
+		//Set CSV name maximum length to 5 (to fit chara, but not character)
+		if (csvName.length() >= 5) csvName.substring(0, 5);
 		String folderName = bt2 ? "bt2" : "bt3";
-		int searchResult = CsvHandler.getCsvSearchResult(csvArray, csvName);
+		int searchResult = CsvHandler.getCsvSearchResult(csvArray, csvName, bt2);
 		String[] paramNames = CsvHandler.getParamNames(csvArray[searchResult]);
 		int[] paramArr = getParamsWithoutPadding(be);
 		//Set components
@@ -207,7 +208,7 @@ public class ParamListEditor {
 			public void actionPerformed(ActionEvent ae) {
 				try {
 					save(paramArr, paramCboxArr, name, false, be);
-				} catch (IOException e) {
+				} catch (Exception e) {
 					Launcher.error(e, tk, dbg);
 				}
 			}
@@ -217,7 +218,7 @@ public class ParamListEditor {
 			public void actionPerformed(ActionEvent ae) {
 				try {
 					save(paramArr, paramCboxArr, folderName, false, be);
-				} catch (IOException e) {
+				} catch (Exception e) {
 					Launcher.error(e, tk, dbg);
 				}
 			}

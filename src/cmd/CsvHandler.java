@@ -21,15 +21,17 @@ public class CsvHandler {
 		raf.close();
 		return rowCnt + 1;
 	}
-	public static File[] getAvailableCsvFiles() {
-		File csvFolder = new File("./csv/");
+	public static File[] getAvailableCsvFiles(boolean toggleNeo) {
+		String folderName = toggleNeo ? "bt2" : "bt3";
+		File csvFolder = new File("./csv/" + folderName);
 		File[] csvFiles = csvFolder.listFiles((dir, name) -> (name.toLowerCase().endsWith(".csv")));
 		//This step is only required for Linux users, as Windows already sorts the files
 		Arrays.sort(csvFiles);
 		return csvFiles;
 	}
-	public static int getCsvSearchResult(File[] csvFiles, String type) {
-		File csvKey = new File("./csv/" + type + ".csv");
+	public static int getCsvSearchResult(File[] csvFiles, String type, boolean toggleNeo) {
+		String folderName = toggleNeo ? "bt2" : "bt3";
+		File csvKey = new File("./csv/" + folderName + "/" + type + ".csv");
 		int csvIndex = Arrays.binarySearch(csvFiles, csvKey);
 		return csvIndex;
 	}

@@ -25,19 +25,25 @@ public class ParamContainer {
 	}
 	public byte[] getBattleParams(int missionIdx) {
 		int size = 0;
-		if (!isListFile) size = toggleNeo ? UltBatNeo.BATTLE_PARAMS_SIZE : UltBatMeteor.BATTLE_PARAMS_SIZE[gameModeIdx];
+		if (!isListFile) size = toggleNeo ? UltBatNeo.BATTLE_PARAMS_SIZES[gameModeIdx] : UltBatMeteor.BATTLE_PARAMS_SIZE[gameModeIdx];
 		else size = UltBatMeteor.LIST_SIZES[gameModeIdx];
+		int pos = missionIdx * size;
+		if (toggleNeo) pos += UltBatNeo.BATTLE_POS_ADJUST[gameModeIdx];
 		byte[] params = new byte[size];
-		System.arraycopy(battleParams, missionIdx * size, params, 0, size);
+		System.arraycopy(battleParams, pos, params, 0, size);
 		return params;
 	}
 	public byte[] getEnemyParams() {
 		return enemyParams;
 	}
 	public byte[] getEnemyParams(int missionIdx) {
-		int size = toggleNeo ? UltBatNeo.NUM_ENEMIES[gameModeIdx] : UltBatMeteor.NUM_ENEMIES[gameModeIdx] * 44;
+		int numEnemyBytes = toggleNeo ? UltBatNeo.CHARA_PARAMS_SIZE : UltBatMeteor.CHARA_PARAMS_SIZE;
+		int size = toggleNeo ? UltBatNeo.ENEMY_PARAMS_SIZES[gameModeIdx] : UltBatMeteor.NUM_ENEMIES[gameModeIdx];
+		if (!toggleNeo) size *= numEnemyBytes;
+		int pos = missionIdx * size;
+		if (toggleNeo) pos += UltBatNeo.ENEMY_POS_ADJUST[gameModeIdx];
 		byte[] params = new byte[size];
-		System.arraycopy(enemyParams, missionIdx * size, params, 0, size);
+		System.arraycopy(enemyParams, pos, params, 0, size);
 		return params;
 	}
 	public RandomAccessFile[] getContainers() {
@@ -47,12 +53,19 @@ public class ParamContainer {
 		System.arraycopy(params, 0, battleParams, 0, params.length);
 	}
 	public void setBattleParams(byte[] params, int missionIdx) {
-		int size = toggleNeo ? UltBatNeo.BATTLE_PARAMS_SIZE : UltBatMeteor.BATTLE_PARAMS_SIZE[gameModeIdx];
-		System.arraycopy(params, 0, battleParams, missionIdx * size, params.length);
+		int size = toggleNeo ? UltBatNeo.BATTLE_PARAMS_SIZES[gameModeIdx] : UltBatMeteor.BATTLE_PARAMS_SIZE[gameModeIdx];
+		int pos = missionIdx * size;
+		if (toggleNeo) pos += UltBatNeo.BATTLE_POS_ADJUST[gameModeIdx]; //TEST THIS LINE PLEASE
+		System.arraycopy(params, 0, battleParams, pos, params.length);
+	}
+	public void setEnemyParams(byte[] params) {
+		System.arraycopy(params, 0, enemyParams, 0, enemyParams.length);
 	}
 	public void setEnemyParams(byte[] params, int missionIdx) {
 		int size = toggleNeo ? UltBatNeo.NUM_ENEMIES[gameModeIdx] : UltBatMeteor.NUM_ENEMIES[gameModeIdx] * 44;
-		System.arraycopy(params, 0, enemyParams, missionIdx * size, size);
+		int pos = missionIdx * size;
+		if (toggleNeo) pos += UltBatNeo.ENEMY_POS_ADJUST[gameModeIdx]; //TEST THIS LINE PLEASE
+		System.arraycopy(params, 0, enemyParams, pos, size);
 	}
 	public void writeParams() throws IOException {
 		for (int fileCnt = 0; fileCnt < containers.length; fileCnt++) {
@@ -90,8 +103,10 @@ public class ParamContainer {
 	}
 	private void initMissionParams() throws IOException {
 		int[] datSizes = new int[containers.length];
-		if (!isListFile) datSizes[0] = toggleNeo ? UltBatNeo.DAT_SIZES[2 * gameModeIdx] : UltBatMeteor.DAT_SIZES[2 * gameModeIdx];
-		else datSizes[0] = (int) containers[0].length();
+		if (containers[0] != null) {
+			if (!isListFile) datSizes[0] = toggleNeo ? UltBatNeo.DAT_SIZES[2 * gameModeIdx] : UltBatMeteor.DAT_SIZES[2 * gameModeIdx];
+			else datSizes[0] = (int) containers[0].length();
+		}
 		if (datSizes.length == 2) 
 			datSizes[1] = toggleNeo ? UltBatNeo.DAT_SIZES[2 * gameModeIdx + 1] : UltBatMeteor.DAT_SIZES[2 * gameModeIdx + 1];
 		for (int datCnt = 0; datCnt < datSizes.length; datCnt++) {
@@ -110,10 +125,8 @@ public class ParamContainer {
 			int datSize2 = toggleNeo ? UltBatNeo.DAT_SIZES[2 * gameModeIdx + 1] : UltBatMeteor.DAT_SIZES[2 * gameModeIdx + 1];
 			for (int datCnt = 0; datCnt < datFiles.length; datCnt++) {
 				long datFileSize = datFiles[datCnt].length();
-				if (datFileSize == datSize1) 
-					containers[0] = new RandomAccessFile(datFiles[datCnt], "rw");
-				else if (datFileSize == datSize2)
-					containers[1] = new RandomAccessFile(datFiles[datCnt], "rw");
+				if (datFileSize == datSize1) containers[0] = new RandomAccessFile(datFiles[datCnt], "rw");
+				else if (datFileSize == datSize2) containers[1] = new RandomAccessFile(datFiles[datCnt], "rw");
 			}
 		}
 		else {
