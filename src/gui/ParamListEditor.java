@@ -84,9 +84,9 @@ public class ParamListEditor {
 	throws IOException {
 		File[] csvArray = CsvHandler.getAvailableCsvFiles(bt2);
 		String[] modeNameArr = name.split(" ");
-		String csvName = modeNameArr[modeNameArr.length - 2].replace("(", "").toLowerCase();
+		String paramType = modeNameArr[modeNameArr.length - 2].replace("(", "").toLowerCase();
 		//Set CSV name maximum length to 5 (to fit chara, but not character)
-		if (csvName.length() >= 5) csvName.substring(0, 5);
+		String csvName = paramType.length() >= 5 ? paramType.substring(0, 5): paramType;
 		String folderName = bt2 ? "bt2" : "bt3";
 		int searchResult = CsvHandler.getCsvSearchResult(csvArray, csvName, bt2);
 		String[] paramNames = CsvHandler.getParamNames(csvArray[searchResult]);

@@ -38,7 +38,7 @@ import cmd.UltBatNeo;
 public class Launcher { 
 	static File currDir = null;
 	static ParamContainer container = null;
-	static final String TITLE = "Nekosparkin";
+	static final String TITLE = "Nekosparkin v1.0.1";
 	static final Color BG_COLOR = new Color(138, 208, 242);
 	static final Color FG_COLOR = new Color(7, 129, 163);
 	static final Color TX_COLOR = new Color(193, 34, 100);
@@ -203,14 +203,16 @@ public class Launcher {
 					int state = ie.getStateChange();
 					if (state == ItemEvent.SELECTED) {
 						toggles[index] = !toggles[index]; //What actually causes the toggle to work properly
-						modeDropDown.removeAllItems();
+						if (index == 0) modeDropDown.removeAllItems();
 						if (toggles[index]) {
 							toggleBtns[index].setIcon(toggleIcos[toggles.length * index + 1]);
-							for (String i: UltBatNeo.MODE_NAMES) modeDropDown.addItem(i);
+							if (index == 0)
+								for (String i: UltBatNeo.MODE_NAMES) modeDropDown.addItem(i);
 						}
 						else {
 							toggleBtns[index].setIcon(toggleIcos[toggles.length * index]);
-							for (String i: UltBatMeteor.MODE_NAMES) modeDropDown.addItem(i);
+							if (index == 0)
+								for (String i: UltBatMeteor.MODE_NAMES) modeDropDown.addItem(i);
 						}
 					}
 				}
