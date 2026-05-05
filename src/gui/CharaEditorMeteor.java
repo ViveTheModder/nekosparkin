@@ -157,8 +157,8 @@ public class CharaEditorMeteor {
 					int numItems = itemDropDowns[0].getItemCount();
 					int[] valArray = new int[11];
 					valArray[0] = charaDropDown.getSelectedIndex();
-					if (valArray[0] == numChars - 2) valArray[0] = 999;
-					else if (valArray[0] == numChars - 1) valArray[0] = 998;
+					if (valArray[0] == numChars - 1) valArray[0] = 999;
+					else if (valArray[0] == numChars - 2) valArray[0] = 998;
 					File imgFile = new File("chips/chara/bt3/" + valArray[0] + ".png");
 					Image img = ImageIO.read(imgFile);
 					ImageIcon ico = new ImageIcon(img.getScaledInstance(64, 64, Image.SCALE_FAST));

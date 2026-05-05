@@ -38,7 +38,7 @@ import cmd.UltBatNeo;
 public class Launcher { 
 	static File currDir = null;
 	static ParamContainer container = null;
-	static final String TITLE = "Nekosparkin v1.0.1";
+	static final String TITLE = "Nekosparkin v1.0.2";
 	static final Color BG_COLOR = new Color(138, 208, 242);
 	static final Color FG_COLOR = new Color(7, 129, 163);
 	static final Color TX_COLOR = new Color(193, 34, 100);
