@@ -46,6 +46,9 @@ public class ParamContainer {
 		System.arraycopy(enemyParams, pos, params, 0, size);
 		return params;
 	}
+	public File getUltBatDir() {
+		return ultBatDir;
+	}
 	public RandomAccessFile[] getContainers() {
 		return containers;
 	}

@@ -35,10 +35,13 @@ import cmd.ParamContainer;
 import cmd.UltBatMeteor;
 import cmd.UltBatNeo;
 
-public class Launcher { 
+public class Launcher {
+	//The binary file in question is 35_.dat from the 04_unknown.cpak file of BT2's Ultimate Battle PAK.
+	static int charaIdPosInBinary = -1, charaIdInBinary = -1;
 	static File currDir = null;
+	static RandomAccessFile unkBinary35 = null; 
 	static ParamContainer container = null;
-	static final String TITLE = "Nekosparkin v1.0.2";
+	static final String TITLE = "Nekosparkin v1.1";
 	static final Color BG_COLOR = new Color(138, 208, 242);
 	static final Color FG_COLOR = new Color(7, 129, 163);
 	static final Color TX_COLOR = new Color(193, 34, 100);
@@ -68,10 +71,6 @@ public class Launcher {
 			}
 		}
 		return pc;
-	}
-	private static void errorBeep(Toolkit tk) {
-		Runnable runWinErrorSnd = (Runnable) tk.getDesktopProperty("win.sound.exclamation");
-		if (runWinErrorSnd!=null) runWinErrorSnd.run();
 	}
 	private static void open(JComboBox<String> modeDropDown, JPanel panel, Toolkit tk, boolean neo, boolean isListFile, boolean debug) {
 		try {
@@ -182,6 +181,7 @@ public class Launcher {
 						if (datFiles != null) {
 							if (datFiles[0] != null) {
 								int idx = modeDropDown.getSelectedIndex();
+								AudioHandler.playAudio(0);
 								if (!isListFile[0])
 									Selector.start(frame, minFrameSize, logo, tk, idx, toggles[1], toggles[0], debug);
 								else
@@ -261,11 +261,11 @@ public class Launcher {
 	}
 	
 	public static void error(String msg, Toolkit tk) {
-		errorBeep(tk);
+		AudioHandler.playAudio(2);
 		JOptionPane.showMessageDialog(null, msg, TITLE + " - Error", JOptionPane.ERROR_MESSAGE);
 	}
 	public static void error(Exception e, Toolkit tk, boolean debug) {
-		errorBeep(tk);
+		AudioHandler.playAudio(2);
 		String err = e.getClass().getSimpleName() + ": " + e.getMessage() + "\n";
 		if (debug) {
 			StackTraceElement[] ste = e.getStackTrace();

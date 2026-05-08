@@ -45,6 +45,7 @@ import cmd.UltBatMeteor;
 import cmd.UltBatNeo;
 
 public class Selector {
+	private static int prevSpinIdx = 0;
 	static byte[] battleParams, enemyParams;
 	
 	private static byte[] getBattleParamsFromUI(JComboBox<String>[] dd, JCheckBox[] cb, JSpinner[] spn, int gmIdx, boolean bt2, boolean be) {
@@ -81,6 +82,7 @@ public class Selector {
 		ParamContainer newContainer = new ParamContainer(Launcher.currDir, gameModeIdx, isListFile, toggleNeo);
 		newContainer.setBattleParams(battleParams);
 		newContainer.setEnemyParams(enemyParams);
+		AudioHandler.playAudio(1);
 		newContainer.writeParams();
 	}
 	private static void saveAs(int gameModeIdx, boolean isListFile, boolean toggleNeo) throws IOException {
@@ -96,6 +98,7 @@ public class Selector {
 			ParamContainer newContainer = new ParamContainer(Launcher.currDir, gameModeIdx, isListFile, toggleNeo);
 			newContainer.setBattleParams(battleParams);
 			newContainer.setEnemyParams(enemyParams);
+			AudioHandler.playAudio(1);
 			Launcher.container.writeParams(chooser.getSelectedFile());
 		}
 	}
@@ -131,6 +134,7 @@ public class Selector {
 		byte[] enemyParams = Launcher.container.getEnemyParams(m);
 		byte[] paramBytes = new byte[4];
 		int numCharaBytes = bt2 ? UltBatNeo.CHARA_PARAMS_SIZE : UltBatMeteor.CHARA_PARAMS_SIZE;
+		//int numEnemyBytes = bt2 ? UltBatNeo.ENEMY_PARAMS_SIZES[gm] : enemyParams.length;
 		int numEnemyBytes = bt2 ? UltBatNeo.NUM_ENEMIES[gm] * numCharaBytes : enemyParams.length;
 		String folderName = bt2 ? "bt2" : "bt3";
 		pnl.removeAll();
@@ -230,13 +234,14 @@ public class Selector {
 					try {
 						int numEnemyBytes = bt2 ? UltBatNeo.ENEMY_PARAMS_SIZES[gmIdx] : UltBatMeteor.CHARA_PARAMS_SIZE;
 						byte[] charaParams = new byte[numEnemyBytes];
-						int missionCnt = (int) missionSelect.getValue() - 1;
+						int mCnt = (int) missionSelect.getValue() - 1;
 						int pos = 0;
-						if (bt2) pos = (missionCnt * numEnemyBytes) + UltBatNeo.ENEMY_POS_ADJUST[gmIdx];
-						else pos = (missionCnt * numEnemyBytes * charaIds.length) + (index * numEnemyBytes);
+						if (bt2) pos = (mCnt * numEnemyBytes) + UltBatNeo.ENEMY_POS_ADJUST[gmIdx];
+						else pos = (mCnt * numEnemyBytes * charaIds.length) + (index * numEnemyBytes);
 						System.arraycopy(enemyParams, pos, charaParams, 0, numEnemyBytes);
+						AudioHandler.playAudio(5);
 						if (bt2)
-							CharaEditorNeo.start(editFrame, launch, charaLabels[index], tk, csvArray, charaParams, pos, index, gmIdx, be, dbg);
+							CharaEditorNeo.start(editFrame, launch, charaLabels[index], tk, csvArray, charaParams, pos, mCnt, index, gmIdx, be, dbg);
 						else CharaEditorMeteor.start(editFrame, launch, charaLabels[index], tk, csvArray, charaParams, pos, be, dbg);
 					} catch (Exception e) {
 						Launcher.error(e, tk, dbg);
@@ -376,6 +381,9 @@ public class Selector {
 			public void stateChanged(ChangeEvent ce) {
 				try {
 					int missionIdx = (int) missionSelect.getValue() - 1;
+					if (missionIdx > prevSpinIdx) AudioHandler.playAudio(3);
+					else AudioHandler.playAudio(4);
+					prevSpinIdx = missionIdx;
 					if (csvIndex >= 0) missionDropDown.setSelectedIndex(missionIdx);
 					updateBatPrmUI(batPrmDropDown, toggles, batPrmSpins, missionPanel, gmIdx, missionIdx, be, bt2);
 					updateCharaImgs(charaLabels, charaChips, charaPanel, charaIds, gmIdx, missionIdx, bt2, be);
@@ -401,6 +409,7 @@ public class Selector {
 					byte[] currBatPrms = getBattleParamsFromUI(batPrmDropDown, toggles, batPrmSpins, gmIdx, bt2, be);
 					Launcher.container.setBattleParams(currBatPrms, (int) missionSelect.getValue() - 1);
 					saveAs(gmIdx, false, bt2);
+					if (Launcher.unkBinary35 != null) CharaEditorNeo.writeToUnkBinary35(Launcher.charaIdInBinary, be);
 				} catch (Exception e) {
 					Launcher.error(e, tk, dbg);
 				}
@@ -413,6 +422,7 @@ public class Selector {
 					byte[] currBatPrms = getBattleParamsFromUI(batPrmDropDown, toggles, batPrmSpins, gmIdx, bt2, be);
 					Launcher.container.setBattleParams(currBatPrms, (int) missionSelect.getValue() - 1);
 					saveAs(gmIdx, false, bt2);
+					if (Launcher.unkBinary35 != null) CharaEditorNeo.writeToUnkBinary35(Launcher.charaIdInBinary, be);
 				} catch (Exception e) {
 					Launcher.error(e, tk, dbg);
 				}
@@ -425,6 +435,7 @@ public class Selector {
 					byte[] currBatPrms = getBattleParamsFromUI(batPrmDropDown, toggles, batPrmSpins, gmIdx, bt2, be);
 					Launcher.container.setBattleParams(currBatPrms, (int) missionSelect.getValue() - 1);
 					save(gmIdx, false, bt2);
+					if (Launcher.unkBinary35 != null) CharaEditorNeo.writeToUnkBinary35(Launcher.charaIdInBinary, be);
 				} catch (Exception e) {
 					Launcher.error(e, tk, dbg);
 				}
@@ -437,6 +448,7 @@ public class Selector {
 					byte[] currBatPrms = getBattleParamsFromUI(batPrmDropDown, toggles, batPrmSpins, gmIdx, bt2, be);
 					Launcher.container.setBattleParams(currBatPrms, (int) missionSelect.getValue() - 1);
 					save(gmIdx, false, bt2);
+					if (Launcher.unkBinary35 != null) CharaEditorNeo.writeToUnkBinary35(Launcher.charaIdInBinary, be);
 				} catch (Exception e) {
 					Launcher.error(e, tk, dbg);
 				}
