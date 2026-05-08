@@ -49,7 +49,7 @@ public class Selector {
 	static byte[] battleParams, enemyParams;
 	
 	private static byte[] getBattleParamsFromUI(JComboBox<String>[] dd, JCheckBox[] cb, JSpinner[] spn, int gmIdx, boolean bt2, boolean be) {
-		int size = (bt2 ? UltBatNeo.BATTLE_PARAMS_SIZES[gmIdx] : UltBatMeteor.BATTLE_PARAM_TYPES.length);
+		int size = (bt2 ? UltBatNeo.BATTLE_PARAMS_SIZES[gmIdx] : UltBatMeteor.BATTLE_PARAMS_SIZE[gmIdx]);
 		byte[] battleParams = new byte[size];
 		int paramVal = 0;
 		for (int paramCnt = 0; paramCnt < battleParams.length / 4; paramCnt++) {
@@ -134,7 +134,6 @@ public class Selector {
 		byte[] enemyParams = Launcher.container.getEnemyParams(m);
 		byte[] paramBytes = new byte[4];
 		int numCharaBytes = bt2 ? UltBatNeo.CHARA_PARAMS_SIZE : UltBatMeteor.CHARA_PARAMS_SIZE;
-		//int numEnemyBytes = bt2 ? UltBatNeo.ENEMY_PARAMS_SIZES[gm] : enemyParams.length;
 		int numEnemyBytes = bt2 ? UltBatNeo.NUM_ENEMIES[gm] * numCharaBytes : enemyParams.length;
 		String folderName = bt2 ? "bt2" : "bt3";
 		pnl.removeAll();
@@ -172,7 +171,6 @@ public class Selector {
 	@SuppressWarnings("unchecked")
 	static void start(JFrame launch, Dimension min, Image logo, Toolkit tk, int gmIdx, boolean be, boolean bt2, boolean dbg)
 	throws IOException {
-		boolean isSrvOrRnk = gmIdx >= UltBatMeteor.SURVIVAL && gmIdx <= UltBatMeteor.CHALLENGE;
 		int[] charaIds = new int[bt2 ? UltBatNeo.NUM_ENEMIES[gmIdx] : UltBatMeteor.NUM_ENEMIES[gmIdx]];
 		int numMissions = bt2 ? UltBatNeo.NUM_MISSIONS[gmIdx] : UltBatMeteor.NUM_MISSIONS[gmIdx];
 		int rows = charaIds.length / 5;
@@ -313,7 +311,7 @@ public class Selector {
 				}
 				else {
 					//Only add Condition and DP Points combo boxes if the gamemode needs them
-					if (isSrvOrRnk && (compCnt == 6 || compCnt == 7)) continue;
+					if (gmIdx != UltBatMeteor.MISSION_100 && (compCnt == 6 || compCnt == 7)) continue;
 					batPrmDropDown[compCnt] = new JComboBox<String>(batPrmNames[compCnt]);
 					batPrmDropDown[compCnt].setAlignmentX(JComboBox.CENTER_ALIGNMENT);
 					((JLabel) batPrmDropDown[compCnt].getRenderer()).setHorizontalAlignment(JLabel.CENTER);
@@ -381,7 +379,9 @@ public class Selector {
 			public void stateChanged(ChangeEvent ce) {
 				try {
 					int missionIdx = (int) missionSelect.getValue() - 1;
-					if (missionIdx > prevSpinIdx) AudioHandler.playAudio(3);
+					if (missionSelect.getNextValue() == null || missionSelect.getPreviousValue() == null)
+						AudioHandler.playAudio(6);
+					else if (missionIdx > prevSpinIdx) AudioHandler.playAudio(3);
 					else AudioHandler.playAudio(4);
 					prevSpinIdx = missionIdx;
 					if (csvIndex >= 0) missionDropDown.setSelectedIndex(missionIdx);
@@ -399,6 +399,7 @@ public class Selector {
 			public void actionPerformed(ActionEvent ae) {
 				int missionIdx = (int) missionSelect.getValue() - 1;
 				byte[] currBatPrms = getBattleParamsFromUI(batPrmDropDown, toggles, batPrmSpins, gmIdx, bt2, be);
+				AudioHandler.playAudio(8);
 				Launcher.container.setBattleParams(currBatPrms, missionIdx);
 			}
 		});
@@ -458,6 +459,7 @@ public class Selector {
 		editFrame.addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosing(WindowEvent we) {
+				AudioHandler.playAudio(7);
 				launch.setEnabled(true);
 				editFrame.dispose();
 			}

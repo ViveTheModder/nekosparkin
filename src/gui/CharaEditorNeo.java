@@ -164,6 +164,7 @@ public class CharaEditorNeo {
 					setUnkBinary35();
 					Launcher.charaIdPosInBinary = getCharaIdPosInBin(gm, mCnt, idx);
 					Launcher.charaIdInBinary = valArray[idx];
+					AudioHandler.playAudio(8);
 					selF.setEnabled(true);
 					frame.dispose();
 				}
@@ -176,6 +177,7 @@ public class CharaEditorNeo {
 		frame.addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosing(WindowEvent we) {
+				AudioHandler.playAudio(7);
 				selF.setEnabled(true);
 				frame.dispose();
 			}

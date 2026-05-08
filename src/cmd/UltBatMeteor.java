@@ -2,8 +2,7 @@ package cmd;
 //Nekosparkin: Ultimate Battle (BT3) Class by ViveTheJoestar
 public class UltBatMeteor {
 	public static final int CHARA_PARAMS_SIZE = 44;
-	public static final int SURVIVAL = 2;
-	public static final int CHALLENGE = 4;
+	public static final int MISSION_100 = 1;
 	public static final int[] BATTLE_PARAMS_SIZE = { 28, 52, 224, 28, 28, 56 };
 	public static final int[] DAT_SIZES = { 256, 320, 5248, 22016, 704, 6656, 2816, 4416, 1088, 1664, 320, 1792 };
 	public static final int[] LIST_SIZES = { 64, 128, 448 };

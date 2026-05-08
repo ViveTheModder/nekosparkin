@@ -7,7 +7,7 @@ import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 
 public class AudioHandler {
-	private static final String[] WAV_NAMES = { "open", "save", "error", "up", "down", "chara" };
+	private static final String[] WAV_NAMES = { "open", "save", "error", "up", "down", "chara", "stop", "exit", "confirm" };
 	public static void playAudio(int index) {
 		try {
 			if (index >= WAV_NAMES.length) return;

@@ -227,6 +227,7 @@ public class ParamListEditor {
 		editFrame.addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosing(WindowEvent we) {
+				AudioHandler.playAudio(7);
 				launch.setEnabled(true);
 				editFrame.dispose();
 			}

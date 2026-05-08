@@ -41,7 +41,7 @@ public class Launcher {
 	static File currDir = null;
 	static RandomAccessFile unkBinary35 = null; 
 	static ParamContainer container = null;
-	static final String TITLE = "Nekosparkin v1.1";
+	static final String TITLE = "Nekosparkin v1.3";
 	static final Color BG_COLOR = new Color(138, 208, 242);
 	static final Color FG_COLOR = new Color(7, 129, 163);
 	static final Color TX_COLOR = new Color(193, 34, 100);
@@ -93,6 +93,12 @@ public class Launcher {
 		Image open = tk.getImage(ClassLoader.getSystemResource("img/open.png"));
 		ImageIcon logoIco = new ImageIcon(logo.getScaledInstance(64, 64, Image.SCALE_SMOOTH));
 		String[] imgNames = {"bt3.png", "bt2.png", "ps2.png", "wii.png"};
+		String[] tooltips = {
+			"Only detect parameters from Ultimate Battle (BT3) files.",
+			"Only detect parameters from Ultimate Battle Z (BT2) files.",
+			"Only detect parameters from the PS2 version (byte order: Little Endian).",
+			"Only detect parameters from the Wii version (byte order: Big Endian)."
+		};
 		//Set components
 		Box modeBox = Box.createHorizontalBox();
 		Dimension minFrameSize = new Dimension(700, 400);
@@ -103,7 +109,10 @@ public class Launcher {
 		for (int icoCnt = 0; icoCnt < toggleIcos.length; icoCnt++) {
 			toggleImgs[icoCnt] = tk.getImage(ClassLoader.getSystemResource("img/" + imgNames[icoCnt]));
 			toggleIcos[icoCnt] = new ImageIcon(toggleImgs[icoCnt].getScaledInstance(48, 48, Image.SCALE_SMOOTH));
-			if (icoCnt % 2 == 0) toggleBtns[icoCnt / 2] = new JToggleButton(toggleIcos[icoCnt]);
+			if (icoCnt % 2 == 0) {
+				toggleBtns[icoCnt / 2] = new JToggleButton(toggleIcos[icoCnt]);
+				toggleBtns[icoCnt / 2].setToolTipText(tooltips[icoCnt]);
+			}
 		}
 		JButton editBtn = new JButton("Edit");
 		JButton openBtn = new JButton("Open Folder...");
@@ -206,11 +215,13 @@ public class Launcher {
 						if (index == 0) modeDropDown.removeAllItems();
 						if (toggles[index]) {
 							toggleBtns[index].setIcon(toggleIcos[toggles.length * index + 1]);
+							toggleBtns[index].setToolTipText(tooltips[toggles.length * index + 1]);
 							if (index == 0)
 								for (String i: UltBatNeo.MODE_NAMES) modeDropDown.addItem(i);
 						}
 						else {
 							toggleBtns[index].setIcon(toggleIcos[toggles.length * index]);
+							toggleBtns[index].setToolTipText(tooltips[toggles.length * index]);
 							if (index == 0)
 								for (String i: UltBatMeteor.MODE_NAMES) modeDropDown.addItem(i);
 						}

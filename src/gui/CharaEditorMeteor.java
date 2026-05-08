@@ -174,6 +174,7 @@ public class CharaEditorMeteor {
 						byte[] valBytes = ParamHandler.getValBytes(valArray[valCnt], be);
 						System.arraycopy(valBytes, 0, Selector.enemyParams, pos + (valCnt * 4), 4);
 					}
+					AudioHandler.playAudio(8);
 					selF.setEnabled(true);
 					frame.dispose();
 				}
@@ -186,6 +187,7 @@ public class CharaEditorMeteor {
 		frame.addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosing(WindowEvent we) {
+				AudioHandler.playAudio(7);
 				selF.setEnabled(true);
 				frame.dispose();
 			}
