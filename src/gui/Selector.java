@@ -48,7 +48,8 @@ public class Selector {
 	private static int prevSpinIdx = 0;
 	static byte[] battleParams, enemyParams;
 	
-	private static byte[] getBattleParamsFromUI(JComboBox<String>[] dd, JCheckBox[] cb, JSpinner[] spn, int gmIdx, boolean bt2, boolean be) {
+	private static byte[] getBattleParamsFromUI(JComboBox<String>[] dd, JCheckBox[] cb, JSpinner[] spn, int mIdx, int gmIdx, boolean bt2, boolean be) {
+		int firstOppIdx = mIdx * UltBatMeteor.NUM_ENEMIES[gmIdx];
 		int size = (bt2 ? UltBatNeo.BATTLE_PARAMS_SIZES[gmIdx] : UltBatMeteor.BATTLE_PARAMS_SIZE[gmIdx]);
 		byte[] battleParams = new byte[size];
 		int paramVal = 0;
@@ -62,11 +63,12 @@ public class Selector {
 					if (paramCnt < dd.length) {
 						if (dd[paramCnt] != null) {
 							int prmIdx = dd[paramCnt].getSelectedIndex();
+							paramVal = prmIdx;
+							//Check if Referee, Map or BGM are set to Random
 							if (paramCnt == 0 || paramCnt == 3 || paramCnt == 4) {
 								int numPrmVals = dd[paramCnt].getItemCount();
 								if (prmIdx == numPrmVals - 1) paramVal = 998;
 							}
-							paramVal = prmIdx;
 						}
 					}
 				}
@@ -74,7 +76,18 @@ public class Selector {
 			else {
 				if (paramCnt < spn.length) paramVal = (int) spn[paramCnt].getValue(); 
 			}
-			System.arraycopy(ParamHandler.getValBytes(paramVal, be), 0, battleParams, paramCnt * 4, 4);
+			if (!bt2) {
+				//Prevention of v1.3 bug, which would overwrite the opponent indices with the last parameter read (DP)
+				if (paramCnt < battleParams.length / 4 - UltBatMeteor.NUM_ENEMIES[gmIdx]) {
+					System.arraycopy(ParamHandler.getValBytes(paramVal, be), 0, battleParams, paramCnt * 4, 4);
+				}
+				//Fix of v1.3 bug, by restoring the original opponent indices, in case they were invalid
+				else {
+					System.arraycopy(ParamHandler.getValBytes(firstOppIdx, be), 0, battleParams, paramCnt * 4, 4);
+					firstOppIdx++;
+				}
+			}
+			else System.arraycopy(ParamHandler.getValBytes(paramVal, be), 0, battleParams, paramCnt * 4, 4);
 		}
 		return battleParams;
 	}
@@ -310,7 +323,7 @@ public class Selector {
 					battlePanel.add(toggleBox);
 				}
 				else {
-					//Only add Condition and DP Points combo boxes if the gamemode needs them
+					//Only add Condition and Destruction Points combo boxes if the gamemode needs them
 					if (gmIdx != UltBatMeteor.MISSION_100 && (compCnt == 6 || compCnt == 7)) continue;
 					batPrmDropDown[compCnt] = new JComboBox<String>(batPrmNames[compCnt]);
 					batPrmDropDown[compCnt].setAlignmentX(JComboBox.CENTER_ALIGNMENT);
@@ -398,7 +411,7 @@ public class Selector {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
 				int missionIdx = (int) missionSelect.getValue() - 1;
-				byte[] currBatPrms = getBattleParamsFromUI(batPrmDropDown, toggles, batPrmSpins, gmIdx, bt2, be);
+				byte[] currBatPrms = getBattleParamsFromUI(batPrmDropDown, toggles, batPrmSpins, missionIdx, gmIdx, bt2, be);
 				AudioHandler.playAudio(8);
 				Launcher.container.setBattleParams(currBatPrms, missionIdx);
 			}
@@ -407,8 +420,9 @@ public class Selector {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
 				try {
-					byte[] currBatPrms = getBattleParamsFromUI(batPrmDropDown, toggles, batPrmSpins, gmIdx, bt2, be);
-					Launcher.container.setBattleParams(currBatPrms, (int) missionSelect.getValue() - 1);
+					int missionIdx = (int) missionSelect.getValue() - 1;
+					byte[] currBatPrms = getBattleParamsFromUI(batPrmDropDown, toggles, batPrmSpins, missionIdx, gmIdx, bt2, be);
+					Launcher.container.setBattleParams(currBatPrms, missionIdx);
 					saveAs(gmIdx, false, bt2);
 					if (Launcher.unkBinary35 != null) CharaEditorNeo.writeToUnkBinary35(Launcher.charaIdInBinary, be);
 				} catch (Exception e) {
@@ -420,8 +434,9 @@ public class Selector {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
 				try {
-					byte[] currBatPrms = getBattleParamsFromUI(batPrmDropDown, toggles, batPrmSpins, gmIdx, bt2, be);
-					Launcher.container.setBattleParams(currBatPrms, (int) missionSelect.getValue() - 1);
+					int missionIdx = (int) missionSelect.getValue() - 1;
+					byte[] currBatPrms = getBattleParamsFromUI(batPrmDropDown, toggles, batPrmSpins, missionIdx, gmIdx, bt2, be);
+					Launcher.container.setBattleParams(currBatPrms, missionIdx);
 					saveAs(gmIdx, false, bt2);
 					if (Launcher.unkBinary35 != null) CharaEditorNeo.writeToUnkBinary35(Launcher.charaIdInBinary, be);
 				} catch (Exception e) {
@@ -433,8 +448,9 @@ public class Selector {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
 				try {
-					byte[] currBatPrms = getBattleParamsFromUI(batPrmDropDown, toggles, batPrmSpins, gmIdx, bt2, be);
-					Launcher.container.setBattleParams(currBatPrms, (int) missionSelect.getValue() - 1);
+					int missionIdx = (int) missionSelect.getValue() - 1;
+					byte[] currBatPrms = getBattleParamsFromUI(batPrmDropDown, toggles, batPrmSpins, missionIdx, gmIdx, bt2, be);
+					Launcher.container.setBattleParams(currBatPrms, missionIdx);
 					save(gmIdx, false, bt2);
 					if (Launcher.unkBinary35 != null) CharaEditorNeo.writeToUnkBinary35(Launcher.charaIdInBinary, be);
 				} catch (Exception e) {
@@ -446,8 +462,9 @@ public class Selector {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
 				try {
-					byte[] currBatPrms = getBattleParamsFromUI(batPrmDropDown, toggles, batPrmSpins, gmIdx, bt2, be);
-					Launcher.container.setBattleParams(currBatPrms, (int) missionSelect.getValue() - 1);
+					int missionIdx = (int) missionSelect.getValue() - 1;
+					byte[] currBatPrms = getBattleParamsFromUI(batPrmDropDown, toggles, batPrmSpins, missionIdx, gmIdx, bt2, be);
+					Launcher.container.setBattleParams(currBatPrms, missionIdx);
 					save(gmIdx, false, bt2);
 					if (Launcher.unkBinary35 != null) CharaEditorNeo.writeToUnkBinary35(Launcher.charaIdInBinary, be);
 				} catch (Exception e) {

@@ -41,7 +41,7 @@ public class Launcher {
 	static File currDir = null;
 	static RandomAccessFile unkBinary35 = null; 
 	static ParamContainer container = null;
-	static final String TITLE = "Nekosparkin v1.3";
+	static final String TITLE = "Nekosparkin v1.3.3.7";
 	static final Color BG_COLOR = new Color(138, 208, 242);
 	static final Color FG_COLOR = new Color(7, 129, 163);
 	static final Color TX_COLOR = new Color(193, 34, 100);
@@ -287,6 +287,7 @@ public class Launcher {
 			}
 		}
 		JOptionPane.showMessageDialog(null, err, TITLE + " - Exception", JOptionPane.ERROR_MESSAGE);
+		System.exit(-1);
 	}
 	public static void main(String[] args) {
 		boolean debug = false;

@@ -9,7 +9,7 @@ public class UltBatMeteor {
 	public static final int[] NUM_ENEMIES = { 1, 5, 50, 1, 1, 8 };
 	public static final int[] NUM_MISSIONS = { 7, 100, 3, 99, 37, 5 };
 	public static final String[] BATTLE_PARAM_NAMES = {
-		"Referee", "Map Destruction", "Time", "Map", "BGM", "COM Transformations/Switches", "Condition", "DP Points"
+		"Referee", "Map Destruction", "Time", "Map", "BGM", "COM Transformations/Switches", "Condition", "Destruction Points"
 	};
 	//The rest of the parameters are assumed to be opponent IDs (integers), so no need to specify
 	public static final String[] BATTLE_PARAM_TYPES = {
